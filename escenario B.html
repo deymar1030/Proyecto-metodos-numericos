@@ -1,0 +1,1753 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FUELWATCH — Vaciado Crítico de Reservas de Carburantes</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Barlow:wght@300;400;500;600;700;900&display=swap"
+    rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <style>
+    /* ═══════════════════════════════════════════════════════════════════
+   FUELWATCH — VACIADO CRÍTICO DE RESERVAS DE CARBURANTES
+   ESTILOS REFINADOS: Layout, Sistemas, Datos, Narrativa
+   ═══════════════════════════════════════════════════════════════════ */
+
+    @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+    /* ═══════════════════════════════════════════════════════════════════
+   TOKENS (Diseño Sistema)
+═══════════════════════════════════════════════════════════════════ */
+    :root {
+      /* Base */
+      --bg: #05070a;
+      --surface: #0a0d14;
+      --surface2: #11161f;
+      --surface3: #181f2c;
+      --border: #253041;
+      --border-glow: #2e3b4e;
+
+      /* Tipografía */
+      --text: #edf2fb;
+      --text-muted: #95a3b8;
+      --text-dim: #4e5a73;
+
+      /* Colores funcionales */
+      --fuel: #f5a623;
+      --fuel-dim: #c28017;
+      --fuel-glow: rgba(245, 166, 35, 0.12);
+      --danger: #ff4d4d;
+      --danger-dim: #cc3d3d;
+      --danger-glow: rgba(255, 77, 77, 0.12);
+      --safe: #3bc78b;
+      --safe-glow: rgba(59, 199, 139, 0.1);
+      --info: #3b82f6;
+      --purple: #a78bfa;
+      --cyan: #2dd4bf;
+
+      /* Métodos numéricos */
+      --euler: #f5a623;
+      --heun: #3b82f6;
+      --rk4: #10b981;
+
+      /* Tipografía */
+      --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --font-display: 'Inter', sans-serif;
+
+      /* Espaciado, bordes */
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-size: 13px;
+      font-weight: 400;
+      line-height: 1.5;
+      overflow: auto;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Scrollbar moderno */
+    ::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--surface);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 2px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--border-glow);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+   LAYOUT PRINCIPAL: SHELL + GRID
+═══════════════════════════════════════════════════════════════════ */
+    .shell {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      min-height: 100vh;
+      background: radial-gradient(circle at 0% 0%, rgba(245, 166, 35, 0.03) 0%, transparent 50%);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+   HEADER — Barra superior técnica
+═══════════════════════════════════════════════════════════════════ */
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 0 28px;
+      background: rgba(10, 13, 20, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      z-index: 10;
+    }
+
+    .header-logo {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 24px;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, var(--fuel) 0%, #fcd34d 100%);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+
+    .header-logo span {
+      background: none;
+      background-clip: unset;
+      -webkit-background-clip: unset;
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    .vsep {
+      width: 1px;
+      height: 24px;
+      background: linear-gradient(to bottom, transparent, var(--border), transparent);
+    }
+
+    .header-sub {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 450;
+      color: var(--text-muted);
+      letter-spacing: -0.01em;
+      background: var(--surface2);
+      padding: 4px 10px;
+      border-radius: 100px;
+      border: 0.5px solid var(--border);
+    }
+
+    .spacer {
+      flex: 1;
+    }
+
+    .header-badges {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .badge {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      font-weight: 500;
+      padding: 4px 10px;
+      border-radius: 100px;
+      letter-spacing: -0.01em;
+      text-transform: uppercase;
+      background: var(--surface2);
+      border: 0.5px solid var(--border);
+      color: var(--text-muted);
+    }
+
+    .badge-fuel {
+      background: var(--fuel-glow);
+      border-color: rgba(245, 166, 35, 0.3);
+      color: var(--fuel);
+    }
+
+    .badge-live {
+      background: var(--danger-glow);
+      border-color: rgba(255, 77, 77, 0.3);
+      color: var(--danger);
+      animation: pulse-border 1.8s ease-in-out infinite;
+    }
+
+    @keyframes pulse-border {
+
+      0%,
+      100% {
+        opacity: 0.6;
+        border-color: rgba(255, 77, 77, 0.3);
+      }
+
+      50% {
+        opacity: 1;
+        border-color: rgba(255, 77, 77, 0.8);
+      }
+    }
+
+    #hClock {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-muted);
+      background: var(--surface2);
+      padding: 4px 10px;
+      border-radius: 100px;
+      letter-spacing: 0.5px;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+   BODY GRID — 3 columnas
+═══════════════════════════════════════════════════════════════════ */
+    .body {
+      display: grid;
+      grid-template-columns: 320px 1fr 340px;
+      min-height: 100%;
+      overflow: auto;
+      gap: 1px;
+      background: var(--border);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+   PANEL IZQUIERDO — Configuración y escenarios
+═══════════════════════════════════════════════════════════════════ */
+    .left {
+      background: var(--surface);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .left-scroll {
+      overflow-y: auto;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0px;
+    }
+
+    /* Section headers */
+    .sh {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .sh-bar {
+      width: 3px;
+      height: 14px;
+      background: var(--fuel);
+      border-radius: 2px;
+    }
+
+    /* Escenarios Cards */
+    .sc-list {
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .sc-card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      cursor: pointer;
+      background: var(--surface);
+      transition: var(--transition);
+    }
+
+    .sc-card:hover {
+      border-color: var(--border-glow);
+      background: var(--surface2);
+      transform: translateX(2px);
+    }
+
+    .sc-card.active {
+      border-color: var(--fuel);
+      background: var(--fuel-glow);
+      box-shadow: 0 0 0 1px rgba(245, 166, 35, 0.2);
+    }
+
+    .sc-title {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: -0.01em;
+      margin-bottom: 4px;
+    }
+
+    .sc-card.active .sc-title {
+      color: var(--fuel);
+    }
+
+    .sc-desc {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .sc-tags {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .stag {
+      font-family: var(--font-mono);
+      font-size: 8px;
+      font-weight: 500;
+      padding: 2px 8px;
+      border-radius: 100px;
+      text-transform: uppercase;
+    }
+
+    .st-ok {
+      background: var(--safe-glow);
+      color: var(--safe);
+      border: 0.5px solid rgba(59, 199, 139, 0.3);
+    }
+
+    .st-warn {
+      background: var(--fuel-glow);
+      color: var(--fuel);
+      border: 0.5px solid rgba(245, 166, 35, 0.3);
+    }
+
+    .st-crit {
+      background: var(--danger-glow);
+      color: var(--danger);
+      border: 0.5px solid rgba(255, 77, 77, 0.3);
+    }
+
+    /* Método selector */
+    .method-section {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .method-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .mth {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--text-muted);
+      padding: 8px 4px;
+      cursor: pointer;
+      transition: var(--transition);
+      text-align: center;
+    }
+
+    .mth:hover {
+      border-color: var(--border-glow);
+      color: var(--text);
+    }
+
+    .mth.e.active {
+      border-color: var(--euler);
+      background: rgba(245, 166, 35, 0.1);
+      color: var(--euler);
+    }
+
+    .mth.h.active {
+      border-color: var(--heun);
+      background: rgba(59, 130, 246, 0.1);
+      color: var(--heun);
+    }
+
+    .mth.r.active {
+      border-color: var(--rk4);
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--rk4);
+    }
+
+    .check-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .check-row input[type='checkbox'] {
+      accent-color: var(--fuel);
+      width: 14px;
+      height: 14px;
+      margin: 0;
+      cursor: pointer;
+    }
+
+    /* Parámetros */
+    .params-section {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .param-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .param-label {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .param-val {
+      color: var(--fuel);
+      font-weight: 600;
+    }
+
+    input[type='range'].fuel-slider {
+      width: 100%;
+      -webkit-appearance: none;
+      height: 3px;
+      border-radius: 3px;
+      outline: none;
+      cursor: pointer;
+      background: linear-gradient(90deg,
+          var(--fuel) var(--pct, 50%),
+          var(--border) var(--pct, 50%));
+    }
+
+    input[type='range'].fuel-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--fuel);
+      cursor: pointer;
+      box-shadow: 0 0 6px var(--fuel);
+      border: none;
+    }
+
+    input[type='number'].num-input {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 6px 8px;
+      width: 100%;
+      outline: none;
+      transition: var(--transition);
+    }
+
+    input[type='number'].num-input:focus {
+      border-color: var(--fuel);
+    }
+
+    /* Ecuaciones box */
+    .eq-box {
+      margin: 16px;
+      padding: 12px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .eq-box .eq-line {
+      color: var(--text-dim);
+    }
+
+    .eq-box b {
+      color: var(--fuel);
+    }
+
+    /* Botón simular */
+    .btn-run {
+      margin: 8px 16px 16px;
+      background: var(--fuel);
+      border: none;
+      border-radius: var(--radius-md);
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: 1px;
+      padding: 12px;
+      cursor: pointer;
+      width: calc(100% - 32px);
+      color: #000;
+      transition: var(--transition);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-run:hover {
+      background: var(--fuel-dim);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px var(--fuel-glow);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+   PANEL CENTRAL — GRÁFICO PRINCIPAL
+═══════════════════════════════════════════════════════════════════ */
+    .center {
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .chart-header {
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      background: rgba(5, 7, 10, 0.8);
+      backdrop-filter: blur(8px);
+    }
+
+    .chart-title {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 18px;
+      letter-spacing: -0.01em;
+    }
+
+    .chart-sub {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .critical-badge {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 100px;
+      background: var(--danger-glow);
+      color: var(--danger);
+      border: 1px solid rgba(255, 77, 77, 0.4);
+      animation: pulse-badge 1.5s infinite;
+    }
+
+    @keyframes pulse-badge {
+
+      0%,
+      100% {
+        opacity: 0.8;
+      }
+
+      50% {
+        opacity: 1;
+      }
+    }
+
+    .chart-area {
+      /* flex: 0 0 auto; */
+      flex: 1;
+      position: relative;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    .main-chart-box {
+      height: 50%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      position: relative;
+    }
+
+    /* Gauge overlay */
+    .gauge-overlay {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      width: 130px;
+      background: rgba(10, 13, 20, 0.95);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 12px;
+    }
+
+    .gauge-title {
+      font-family: var(--font-mono);
+      font-size: 8px;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .gauge-val {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 24px;
+      line-height: 1;
+    }
+
+    .gauge-unit {
+      font-family: var(--font-mono);
+      font-size: 8px;
+      color: var(--text-muted);
+    }
+
+    .gauge-bar-track {
+      height: 4px;
+      background: var(--surface3);
+      border-radius: 2px;
+      overflow: hidden;
+      margin: 8px 0 4px;
+    }
+
+    .gauge-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.6s ease;
+    }
+
+    .gauge-label {
+      font-family: var(--font-mono);
+      font-size: 8px;
+      font-weight: 500;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+   PANEL DERECHO — Narrativa y resultados
+═══════════════════════════════════════════════════════════════════ */
+    .right {
+      background: var(--surface);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .right-scroll {
+      overflow-y: auto;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0px;
+    }
+
+    /* Narrativa paso a paso */
+    .narrative {
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .step-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .step-node {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      background: var(--surface2);
+      color: var(--text-muted);
+      transition: var(--transition);
+    }
+
+    .step-node.act {
+      border-color: var(--fuel);
+      color: var(--fuel);
+      background: var(--fuel-glow);
+    }
+
+    .step-node.done {
+      border-color: var(--fuel-dim);
+      background: var(--fuel-dim);
+      color: #000;
+    }
+
+    .step-seg {
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .step-title {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 14px;
+      margin-bottom: 6px;
+      color: var(--fuel);
+    }
+
+    .step-body {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    /* Resultados clave */
+    .result-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .res-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 10px 12px;
+    }
+
+    .res-lbl {
+      font-family: var(--font-mono);
+      font-size: 8px;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .res-val {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 20px;
+      line-height: 1.2;
+    }
+
+    .res-unit {
+      font-family: var(--font-mono);
+      font-size: 8px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .fok {
+      color: var(--safe);
+    }
+
+    .fwarn {
+      color: var(--fuel);
+    }
+
+    .fcrit {
+      color: var(--danger);
+    }
+
+    .fdim {
+      color: var(--text-muted);
+    }
+
+    /* Tabla comparativa */
+    .cmp-section {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sec-title {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    .cmp-tbl {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--font-mono);
+      font-size: 9px;
+    }
+
+    .cmp-tbl th {
+      text-align: left;
+      padding: 6px 4px;
+      color: var(--text-muted);
+      font-weight: 500;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .cmp-tbl td {
+      padding: 6px 4px;
+      border-bottom: 1px solid rgba(37, 48, 65, 0.5);
+      color: var(--text-dim);
+    }
+
+    .cmp-tbl td.r {
+      text-align: right;
+    }
+
+    .cmp-tbl tr.best td {
+      background: rgba(245, 166, 35, 0.05);
+    }
+
+    .method-dot {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+
+    /* Fase diagrama mini */
+    .phase-section {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .phase-box {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 8px;
+      height: 140px;
+      position: relative;
+    }
+
+    /* Sección respuestas */
+    .answers-section {
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .answer-item {
+      border-left: 2px solid;
+      padding: 8px 12px;
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      font-family: var(--font-mono);
+      font-size: 9px;
+      line-height: 1.5;
+    }
+
+    .ans-q {
+      border-color: var(--border);
+      background: rgba(37, 48, 65, 0.2);
+      color: var(--text-muted);
+    }
+
+    .ans-ok {
+      border-color: var(--safe);
+      background: var(--safe-glow);
+    }
+
+    .ans-warn {
+      border-color: var(--fuel);
+      background: var(--fuel-glow);
+    }
+
+    .ans-crit {
+      border-color: var(--danger);
+      background: var(--danger-glow);
+    }
+
+    .ans-tag {
+      font-size: 7px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    /* Story box */
+    .story-box {
+      margin: 8px 16px;
+      padding: 12px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--fuel);
+      border-radius: var(--radius-md);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      display: none;
+    }
+
+    .story-box.show {
+      display: block;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+   OVERLAY DE SIMULACIÓN
+═══════════════════════════════════════════════════════════════════ */
+    .run-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      background: rgba(5, 7, 10, 0.92);
+      backdrop-filter: blur(16px);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+    }
+
+    .run-overlay.show {
+      display: flex;
+    }
+
+    .run-ring {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      border-top-color: var(--fuel);
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .run-msg {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 18px;
+      letter-spacing: 1px;
+      color: var(--fuel);
+    }
+
+    .run-sub {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+   AJUSTES Y UTILIDADES
+═══════════════════════════════════════════════════════════════════ */
+    .crit-line-indicator {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      font-family: var(--font-mono);
+      font-size: 8px;
+      color: var(--danger);
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+    }
+
+    /* Ocultar título del escenario (se muestra en el navbar) */
+    .header {
+      display: none !important;
+    }
+  </style>
+
+</head>
+
+<body>
+  <div class="shell">
+
+    <!-- HEADER -->
+    <div class="header">
+      <div class="header-logo">FUEL<span>WATCH</span></div>
+      <div class="vsep"></div>
+      <div class="header-sub">Escenario B — Vaciado Crítico de Reservas<br>ODEs: Euler · Heun · Runge-Kutta 4° Orden
+      </div>
+      <div class="spacer"></div>
+      <div class="header-badges">
+        <div class="badge badge-fuel">EDO · R'(t) = E(t) − C(t)</div>
+        <div class="badge badge-live" id="critBadge" style="display:none">⚠ RESERVA CRÍTICA</div>
+      </div>
+      <div class="vsep"></div>
+      <div id="hClock">--:--:--</div>
+    </div>
+
+    <!-- BODY -->
+    <div class="body">
+
+      <!-- ════ LEFT ════ -->
+      <div class="left">
+        <div class="left-scroll">
+
+          <div class="sh">
+            <div class="sh-bar" style="background:var(--fuel)"></div>ESCENARIOS DE CRISIS
+          </div>
+          <div class="sc-list" id="scList"></div>
+
+          <div class="sh">
+            <div class="sh-bar" style="background:var(--purple)"></div>MÉTODO NUMÉRICO
+          </div>
+          <div class="method-section">
+            <div class="method-grid" id="methodGrid"></div>
+            <div class="check-row">
+              <input type="checkbox" id="showAll" />
+              <label for="showAll" style="cursor:pointer">Comparar todos los métodos</label>
+            </div>
+          </div>
+
+          <div class="sh">
+            <div class="sh-bar" style="background:var(--blue)"></div>PARÁMETROS DEL SISTEMA
+          </div>
+          <div class="params-section">
+            <div class="param-group">
+              <div class="param-label">Reserva inicial R₀<span class="param-val" id="pR0v">1000 L</span></div>
+              <input type="range" class="fuel-slider" id="pR0" min="200" max="5000" step="50" value="1000" />
+            </div>
+            <div class="param-group">
+              <div class="param-label">Nivel crítico Rₓ<span class="param-val" id="pRcv">150 L</span></div>
+              <input type="range" class="fuel-slider" id="pRc" min="50" max="500" step="10" value="150" />
+            </div>
+            <div class="param-group">
+              <div class="param-label">Entrada E₀ (L/día)<span class="param-val" id="pEv">200 L/d</span></div>
+              <input type="range" class="fuel-slider" id="pE" min="0" max="600" step="10" value="200" />
+            </div>
+            <div class="param-group">
+              <div class="param-label">Consumo base C₀ (L/día)<span class="param-val" id="pCv">280 L/d</span></div>
+              <input type="range" class="fuel-slider" id="pC" min="50" max="800" step="10" value="280" />
+            </div>
+            <div class="param-group">
+              <div class="param-label">Factor de pánico α<span class="param-val" id="pAv">0.15</span></div>
+              <input type="range" class="fuel-slider" id="pA" min="0" max="0.8" step="0.01" value="0.15" />
+            </div>
+            <div class="param-group">
+              <div class="param-label">Reducción abastec. β<span class="param-val" id="pBv">0.0</span></div>
+              <input type="range" class="fuel-slider" id="pB" min="0" max="0.9" step="0.01" value="0" />
+            </div>
+            <div class="param-group">
+              <div class="param-label">Días a simular<span class="param-val" id="pDv">30 días</span></div>
+              <input type="range" class="fuel-slider" id="pD" min="5" max="90" step="1" value="30" />
+            </div>
+            <div class="param-group">
+              <div class="param-label">Paso h<span class="param-val" id="pHv">0.25</span></div>
+              <input type="range" class="fuel-slider" id="pH" min="0.05" max="1.0" step="0.05" value="0.25" />
+            </div>
+          </div>
+
+          <div class="eq-box" id="eqBox">
+            <div style="font-family:var(--mono);font-size:8px;color:var(--fg3);letter-spacing:1px;margin-bottom:5px">
+              MODELO EDO ACTIVO</div>
+            <div class="eq-line"><b>R'(t)</b> = E(t) − C(t)</div>
+            <div class="eq-line"><b>E(t)</b> = E₀ · (1 − β)</div>
+            <div class="eq-line"><b>C(t)</b> = C₀ · (1 + α · t/T)</div>
+            <div style="margin-top:4px;color:var(--fg3);font-size:8px">α=pánico, β=reducción abastech.</div>
+          </div>
+
+          <div class="story-box" id="storyBox"></div>
+
+          <button class="btn-run" id="btnRun" onclick="handleRun()">▶ SIMULAR VACIADO</button>
+
+        </div>
+      </div>
+
+      <!-- ════ CENTER ════ -->
+      <div class="center">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title" id="chartTitle">RESERVA DE CARBURANTE R(t)</div>
+            <div class="chart-sub" id="chartSub">Configure parámetros y presione SIMULAR</div>
+          </div>
+          <div class="critical-badge" id="criticalBadge">⚠ NIVEL CRÍTICO ALCANZADO</div>
+        </div>
+        <div class="chart-area">
+          <div class="main-chart-box">
+            <canvas id="mainChart"></canvas>
+            <div class="gauge-overlay" id="gaugeOverlay">
+              <div class="gauge-title">RESERVA FINAL</div>
+              <div class="gauge-val" id="gaugeVal">—</div>
+              <div class="gauge-unit">litros</div>
+              <div class="gauge-bar-track">
+                <div class="gauge-bar-fill" id="gaugeBar"></div>
+              </div>
+              <div class="gauge-label" id="gaugeLabel"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ RIGHT ════ -->
+      <div class="right">
+        <div class="right-scroll">
+
+          <div class="sh">
+            <div class="sh-bar" style="background:var(--blue)"></div>ANÁLISIS PASO A PASO
+          </div>
+          <div class="narrative">
+            <div class="step-row">
+              <div class="step-node" id="sn1">1</div>
+              <div class="step-seg"></div>
+              <div class="step-node" id="sn2">2</div>
+              <div class="step-seg"></div>
+              <div class="step-node" id="sn3">3</div>
+            </div>
+            <div id="stepContent">
+              <div class="step-title">Seleccione un escenario</div>
+              <div class="step-body">Elija uno de los 4 escenarios de crisis del panel izquierdo para comenzar.</div>
+            </div>
+          </div>
+
+          <div class="sh">
+            <div class="sh-bar" style="background:var(--fuel)"></div>RESULTADOS CLAVE
+          </div>
+          <div class="result-grid">
+            <div class="res-card">
+              <div class="res-lbl">Días hasta crítico</div>
+              <div class="res-val fdim" id="rDays">—</div>
+              <div class="res-unit">días</div>
+            </div>
+            <div class="res-card">
+              <div class="res-lbl">Reserva final</div>
+              <div class="res-val fdim" id="rFinal">—</div>
+              <div class="res-unit">litros</div>
+            </div>
+            <div class="res-card">
+              <div class="res-lbl">Consumo total</div>
+              <div class="res-val fdim" id="rTotal">—</div>
+              <div class="res-unit">litros</div>
+            </div>
+            <div class="res-card">
+              <div class="res-lbl">Error método</div>
+              <div class="res-val fdim" id="rError">—</div>
+              <div class="res-unit">vs RK4</div>
+            </div>
+          </div>
+
+          <div class="sh">
+            <div class="sh-bar" style="background:var(--purple)"></div>COMPARACIÓN DE MÉTODOS
+          </div>
+          <div class="cmp-section">
+            <table class="cmp-tbl">
+              <thead>
+                <tr>
+                  <th>MÉTODO</th>
+                  <th>DÍAS CRÍTICO</th>
+                  <th class="r">R FINAL (L)</th>
+                  <th class="r">ERROR (L)</th>
+                </tr>
+              </thead>
+              <tbody id="cmpBody">
+                <tr>
+                  <td colspan="4" style="color:var(--fg3);padding:8px 5px;font-size:9px">Presione SIMULAR</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="sh">
+            <div class="sh-bar" style="background:var(--teal)"></div>ERROR vs PASO h
+          </div>
+          <div class="phase-section">
+            <div class="phase-box"><canvas id="errorChart"></canvas></div>
+          </div>
+
+          <div class="sh">
+            <div class="sh-bar" style="background:var(--danger)"></div>RESPUESTAS DE LA SIMULACIÓN
+          </div>
+          <div class="answers-section" id="answersSection">
+            <div class="answer-item ans-q"><span class="ans-tag" style="color:var(--fg3)">PENDIENTE</span>Ejecute la
+              simulación para ver las respuestas automáticas.</div>
+          </div>
+
+        </div>
+      </div>
+
+    </div><!-- /body -->
+  </div><!-- /shell -->
+
+  <!-- RUNNING OVERLAY -->
+  <div class="run-overlay" id="runOverlay">
+    <div class="run-ring"></div>
+    <div class="run-msg" id="runMsg">SIMULANDO...</div>
+    <div class="run-sub" id="runSub">Inicializando EDO</div>
+  </div>
+
+  <script>
+    "use strict";
+
+    /* ═══════════════════════════════════════════════
+       SCENARIOS
+    ═══════════════════════════════════════════════ */
+    const SCENARIOS = [
+      {
+        id: "normal", title: "Operación Normal", tag: "ok", tagLabel: "ESTABLE",
+        desc: "Déficit moderado. Reservas se agotan lentamente.",
+        story: "<b>Planta Central, La Paz.</b> Operación diaria normal. La entrada de combustible cubre el 71% del consumo. Las reservas disminuyen a un ritmo constante. Sin pánico social ni restricciones de suministro.",
+        params: { R0: 1000, Rc: 150, E: 200, C: 280, alpha: 0.05, beta: 0.0, days: 30, h: 0.25 },
+        steps: [
+          { title: "El sistema", body: "La reserva cae porque el <b>consumo (280 L/día)</b> supera la entrada (<b>200 L/día</b>). R'(t) = 200 − 280 = −80 L/día en condiciones base." },
+          { title: "Integrando R'(t)", body: "Cada método numérico avanza en pasos h. Euler usa la pendiente actual. Heun corrige con la pendiente final. RK4 promedia 4 pendientes intermedias." },
+          { title: "Pronóstico", body: "Con este déficit, la reserva se agota en ~11 días. Sin intervención, la planta queda sin combustible antes de que llegue un nuevo abastecimiento." },
+        ]
+      },
+      {
+        id: "panico", title: "Pánico Social", tag: "warn", tagLabel: "ALERTA",
+        desc: "Rumor de escasez dispara consumo. Factor α alto.",
+        story: "<b>Semana de incertidumbre.</b> Un rumor en redes sociales genera filas de hasta 3 horas en la planta. El consumo crece exponencialmente día a día (α=0.35). La reserva cae en picada.",
+        params: { R0: 1000, Rc: 150, E: 180, C: 260, alpha: 0.35, beta: 0.1, days: 20, h: 0.25 },
+        steps: [
+          { title: "El pánico", body: "El consumo crece con el tiempo: <b>C(t) = C₀·(1 + α·t/T)</b>. Con α=0.35, el consumo final casi duplica al inicial. Modela el comportamiento de compra por pánico." },
+          { title: "No linealidad", body: "La EDO tiene ahora término variable en el tiempo. R'(t) = E·(1−β) − C₀·(1+α·t/T). Los métodos iterativos muestran diferencias en la aproximación de esta curva." },
+          { title: "Colapso acelerado", body: "La reserva entra en nivel crítico mucho antes que en operación normal. <b>RK4 es más preciso</b> porque captura mejor la aceleración del consumo." },
+        ]
+      },
+      {
+        id: "bloqueo", title: "Bloqueo de Suministro", tag: "crit", tagLabel: "CRÍTICO",
+        desc: "Ruta cortada. Abastecimiento reducido al 20%.",
+        story: "<b>Carretera a Oruro bloqueada.</b> Los camiones cisterna no pueden llegar a la planta. El abastecimiento cae un 80% (β=0.8). La planta opera casi solo con sus reservas actuales.",
+        params: { R0: 800, Rc: 150, E: 300, C: 250, alpha: 0.1, beta: 0.80, days: 15, h: 0.1 },
+        steps: [
+          { title: "El bloqueo", body: "La entrada efectiva: <b>E(t) = E₀·(1−β) = 300·0.2 = 60 L/día</b>. El consumo base es 250 L/día. Déficit neto: −190 L/día desde el día 1." },
+          { title: "Colapso inminente", body: "Con reserva inicial de 800L y déficit de 190L/día, el nivel crítico se alcanza en menos de 4 días. El paso h pequeño (0.1) es crucial para precisión." },
+          { title: "Diferencia Euler vs RK4", body: "Con pendiente muy pronunciada y h grande, <b>Euler comete errores acumulativos importantes</b>. RK4 mantiene la precisión incluso en descensos abruptos." },
+        ]
+      },
+      {
+        id: "combinado", title: "Crisis Combinada", tag: "crit", tagLabel: "COLAPSO",
+        desc: "Pánico + bloqueo simultáneos. Colapso en días.",
+        story: "<b>Escenario extremo.</b> Bloqueo de suministro mientras se dispara el pánico social. La planta enfrenta el peor escenario posible: reservas que caen más rápido que en cualquier otro caso individual.",
+        params: { R0: 1200, Rc: 200, E: 400, C: 300, alpha: 0.4, beta: 0.65, days: 12, h: 0.1 },
+        steps: [
+          { title: "La tormenta perfecta", body: "<b>Dos perturbaciones simultáneas:</b> entrada reducida al 35% (β=0.65) y consumo que crece un 40% (α=0.4). R'(t) se vuelve muy negativo rápidamente." },
+          { title: "Rigidez numérica", body: "El sistema se vuelve 'stiff': las soluciones caen abruptamente. <b>Euler con h grande puede generar oscilaciones</b>. Se recomienda h≤0.1 para este escenario." },
+          { title: "Colapso total", body: "La reserva llega a nivel crítico en días. Ningún método cambia la realidad física: sin suministro y con pánico, la planta se queda sin combustible irremediablemente." },
+        ]
+      },
+    ];
+
+    /* ═══════════════════════════════════════════════
+       NUMERICAL METHODS: R'(t) = f(t, R)
+    ═══════════════════════════════════════════════ */
+    function makeODE(E0, C0, alpha, beta, T) {
+      return function (t, R) {
+        const E = E0 * (1 - beta);
+        const C = C0 * (1 + alpha * (t / T));
+        return E - C;
+      };
+    }
+
+    function solveEuler(f, R0, days, h) {
+      const t = [0], R = [R0];
+      let ti = 0, Ri = R0;
+      const steps = Math.round(days / h);
+      for (let i = 0; i < steps; i++) {
+        const dR = f(ti, Ri);
+        Ri += h * dR;
+        ti += h;
+        if (i % Math.max(1, Math.round(1 / h)) === 0 || i === steps - 1) { t.push(+ti.toFixed(4)); R.push(+Ri.toFixed(4)) }
+      }
+      return { t, R, method: "Euler" };
+    }
+
+    function solveHeun(f, R0, days, h) {
+      const t = [0], R = [R0];
+      let ti = 0, Ri = R0;
+      const steps = Math.round(days / h);
+      for (let i = 0; i < steps; i++) {
+        const k1 = f(ti, Ri);
+        const Rpred = Ri + h * k1;
+        const k2 = f(ti + h, Rpred);
+        Ri += h * (k1 + k2) / 2;
+        ti += h;
+        if (i % Math.max(1, Math.round(1 / h)) === 0 || i === steps - 1) { t.push(+ti.toFixed(4)); R.push(+Ri.toFixed(4)) }
+      }
+      return { t, R, method: "Heun" };
+    }
+
+    function solveRK4(f, R0, days, h) {
+      const t = [0], R = [R0];
+      let ti = 0, Ri = R0;
+      const steps = Math.round(days / h);
+      for (let i = 0; i < steps; i++) {
+        const k1 = f(ti, Ri);
+        const k2 = f(ti + h / 2, Ri + h * k1 / 2);
+        const k3 = f(ti + h / 2, Ri + h * k2 / 2);
+        const k4 = f(ti + h, Ri + h * k3);
+        Ri += h * (k1 + 2 * k2 + 2 * k3 + k4) / 6;
+        ti += h;
+        if (i % Math.max(1, Math.round(1 / h)) === 0 || i === steps - 1) { t.push(+ti.toFixed(4)); R.push(+Ri.toFixed(4)) }
+      }
+      return { t, R, method: "RK4" };
+    }
+
+    // Find day when R drops below critical level
+    function findCriticalDay(tArr, RArr, Rc) {
+      for (let i = 1; i < RArr.length; i++) {
+        if (RArr[i] <= Rc) {
+          // interpolate
+          const frac = (RArr[i - 1] - Rc) / (RArr[i - 1] - RArr[i]);
+          return tArr[i - 1] + frac * (tArr[i] - tArr[i - 1]);
+        }
+      }
+      return null; // never reached
+    }
+
+    function maxAbsError(R1, R2) {
+      const n = Math.min(R1.length, R2.length);
+      let mx = 0;
+      for (let i = 0; i < n; i++)mx = Math.max(mx, Math.abs(R1[i] - R2[i]));
+      return mx;
+    }
+
+    // Error vs step h analysis
+    function errorVsH(f, R0, days, Rc) {
+      const steps = [0.5, 0.4, 0.3, 0.2, 0.1, 0.05];
+      const refRK4 = solveRK4(f, R0, days, 0.02);
+      const refFinal = refRK4.R[refRK4.R.length - 1];
+      const eulerErr = [], heunErr = [], rk4Err = [];
+      steps.forEach(h => {
+        const e = solveEuler(f, R0, days, h); const eu = e.R[e.R.length - 1]; eulerErr.push(Math.abs(eu - refFinal));
+        const hn = solveHeun(f, R0, days, h); const hf = hn.R[hn.R.length - 1]; heunErr.push(Math.abs(hf - refFinal));
+        const r = solveRK4(f, R0, days, h); const rf = r.R[r.R.length - 1]; rk4Err.push(Math.abs(rf - refFinal));
+      });
+      return { steps, eulerErr, heunErr, rk4Err };
+    }
+
+    /* ═══════════════════════════════════════════════
+       STATE
+    ═══════════════════════════════════════════════ */
+    let _activeSc = null, _selMethod = "rk4", _mainChart = null, _errorChart = null;
+
+    /* ═══════════════════════════════════════════════
+       READ PARAMS
+    ═══════════════════════════════════════════════ */
+    function readParams() {
+      return {
+        R0: +document.getElementById("pR0").value,
+        Rc: +document.getElementById("pRc").value,
+        E: +document.getElementById("pE").value,
+        C: +document.getElementById("pC").value,
+        alpha: +document.getElementById("pA").value,
+        beta: +document.getElementById("pB").value,
+        days: +document.getElementById("pD").value,
+        h: +document.getElementById("pH").value,
+      };
+    }
+
+    /* ═══════════════════════════════════════════════
+       SLIDER WIRING
+    ═══════════════════════════════════════════════ */
+    const sliderMap = [
+      ["pR0", "pR0v", v => `${v} L`],
+      ["pRc", "pRcv", v => `${v} L`],
+      ["pE", "pEv", v => `${v} L/d`],
+      ["pC", "pCv", v => `${v} L/d`],
+      ["pA", "pAv", v => parseFloat(v).toFixed(2)],
+      ["pB", "pBv", v => parseFloat(v).toFixed(2)],
+      ["pD", "pDv", v => `${v} días`],
+      ["pH", "pHv", v => parseFloat(v).toFixed(2)],
+    ];
+    sliderMap.forEach(([id, vid, fmt]) => {
+      const sl = document.getElementById(id);
+      const up = () => {
+        document.getElementById(vid).textContent = fmt(sl.value);
+        const pct = ((sl.value - sl.min) / (sl.max - sl.min) * 100).toFixed(1);
+        sl.style.setProperty("--pct", pct + "%");
+      };
+      sl.addEventListener("input", up); up();
+    });
+
+    /* ═══════════════════════════════════════════════
+       METHOD GRID
+    ═══════════════════════════════════════════════ */
+    const METHODS = [{ id: "euler", label: "EULER", cls: "e" }, { id: "heun", label: "HEUN", cls: "h" }, { id: "rk4", label: "RK4", cls: "r" }];
+    function buildMethodGrid() {
+      const g = document.getElementById("methodGrid"); g.innerHTML = "";
+      METHODS.forEach(m => {
+        const btn = document.createElement("button");
+        btn.className = `mth ${m.cls}` + (m.id === _selMethod ? " active" : "");
+        btn.textContent = m.label;
+        btn.onclick = () => { _selMethod = m.id; buildMethodGrid() };
+        g.appendChild(btn);
+      });
+    }
+
+    /* ═══════════════════════════════════════════════
+       SCENARIO LIST
+    ═══════════════════════════════════════════════ */
+    function buildScenarios() {
+      const list = document.getElementById("scList"); list.innerHTML = "";
+      SCENARIOS.forEach(sc => {
+        const d = document.createElement("div"); d.className = "sc-card"; d.id = "sc_" + sc.id;
+        const tc = { ok: "st-ok", warn: "st-warn", crit: "st-crit" }[sc.tag];
+        d.innerHTML = `<div class="sc-title">${sc.title}</div><div class="sc-desc">${sc.desc}</div><div class="sc-tags"><span class="stag ${tc}">${sc.tagLabel}</span></div>`;
+        d.onclick = () => selectScenario(sc); list.appendChild(d);
+      });
+    }
+
+    function selectScenario(sc) {
+      _activeSc = sc;
+      document.querySelectorAll(".sc-card").forEach(c => c.classList.remove("active"));
+      document.getElementById("sc_" + sc.id).classList.add("active");
+      // Load params
+      const p = sc.params;
+      const map = { pR0: p.R0, pRc: p.Rc, pE: p.E, pC: p.C, pA: p.alpha, pB: p.beta, pD: p.days, pH: p.h };
+      Object.entries(map).forEach(([id, v]) => {
+        const el = document.getElementById(id); if (el) { el.value = v; el.dispatchEvent(new Event("input")) }
+      });
+      setStep(1, sc);
+      document.getElementById("chartTitle").textContent = sc.title.toUpperCase() + " — R(t)";
+      document.getElementById("chartSub").textContent = "Presione SIMULAR VACIADO";
+      const sb = document.getElementById("storyBox"); sb.innerHTML = `<div style="font-family:var(--mono);font-size:7px;color:var(--fg3);letter-spacing:1px;margin-bottom:4px">CONTEXTO OPERATIVO</div>${sc.story}`; sb.classList.add("show");
+      document.getElementById("critBadge").style.display = "none";
+      document.getElementById("criticalBadge").style.display = "none";
+    }
+
+    /* ═══════════════════════════════════════════════
+       STEP NARRATIVE
+    ═══════════════════════════════════════════════ */
+    function setStep(n, sc) {
+      [1, 2, 3].forEach(i => {
+        const el = document.getElementById("sn" + i);
+        el.className = "step-node" + (i < n ? " done" : i === n ? " act" : "");
+      });
+      const s = sc.steps[n - 1];
+      document.getElementById("stepContent").innerHTML = `<div class="step-title">${s.title}</div><div class="step-body">${s.body}</div>`;
+    }
+
+    /* ═══════════════════════════════════════════════
+       MAIN CHART
+    ═══════════════════════════════════════════════ */
+    const METHOD_COLORS = { euler: "#f5a623", heun: "#4d9de0", rk4: "#34c759" };
+    const METHOD_LABELS = { euler: "Euler", heun: "Heun (Trapecio)", rk4: "Runge-Kutta 4" };
+
+    function renderMainChart(datasets, days, Rc) {
+      if (_mainChart) _mainChart.destroy();
+      const ctx = document.getElementById("mainChart").getContext("2d");
+      _mainChart = new Chart(ctx, {
+        type: "line",
+        data: { datasets },
+        options: {
+          responsive: true, maintainAspectRatio: false, animation: { duration: 700 },
+          parsing: false,
+          scales: {
+            x: {
+              type: "linear",
+              title: { display: true, text: "Tiempo (días)", color: "#5a5850", font: { family: "Space Mono", size: 9 } },
+              ticks: { color: "#5a5850", font: { family: "Space Mono", size: 8 } },
+              grid: { color: "rgba(42,42,38,.4)" },
+              min: 0, max: days
+            },
+            y: {
+              title: { display: true, text: "Reserva R(t) — litros", color: "#5a5850", font: { family: "Space Mono", size: 9 } },
+              ticks: { color: "#5a5850", font: { family: "Space Mono", size: 8 } },
+              grid: { color: "rgba(42,42,38,.4)" },
+              beginAtZero: true
+            }
+          },
+          plugins: {
+            legend: { labels: { color: "#9a9688", font: { family: "Space Mono", size: 9 }, boxWidth: 10, padding: 12 } },
+            tooltip: {
+              backgroundColor: "#181816", borderColor: "#3a3a34", borderWidth: 1,
+              titleColor: "#f5a623", bodyColor: "#9a9688",
+              titleFont: { family: "Space Mono", size: 9 }, bodyFont: { family: "Space Mono", size: 9 },
+              callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)} L` }
+            },
+            // Critical line annotation via plugin
+            annotation: { annotations: { critLine: { type: "line", yMin: Rc, yMax: Rc, borderColor: "rgba(255,59,48,.6)", borderWidth: 1.5, borderDash: [5, 4], label: { content: `Crítico: ${Rc}L`, display: true, position: "end", color: "#ff3b30", font: { family: "Space Mono", size: 8 }, backgroundColor: "rgba(10,10,8,.8)" } } } },
+          }
+        },
+        plugins: [{
+          id: "critLine",
+          afterDraw(chart) {
+            const { ctx, chartArea, scales } = chart;
+            const yPx = scales.y.getPixelForValue(Rc);
+            if (yPx >= chartArea.top && yPx <= chartArea.bottom) {
+              ctx.save();
+              ctx.setLineDash([6, 4]);
+              ctx.strokeStyle = "rgba(255,59,48,.55)";
+              ctx.lineWidth = 1.5;
+              ctx.beginPath(); ctx.moveTo(chartArea.left, yPx); ctx.lineTo(chartArea.right, yPx); ctx.stroke();
+              ctx.setLineDash([]);
+              ctx.fillStyle = "rgba(255,59,48,.8)";
+              ctx.font = "8px Space Mono";
+              ctx.fillText(`⚠ Crítico: ${Rc} L`, chartArea.right - 100, yPx - 5);
+              ctx.restore();
+            }
+          }
+        }]
+      });
+    }
+
+    /* ═══════════════════════════════════════════════
+       ERROR VS H CHART
+    ═══════════════════════════════════════════════ */
+    function renderErrorChart(errData) {
+      if (_errorChart) _errorChart.destroy();
+      const ctx = document.getElementById("errorChart").getContext("2d");
+      _errorChart = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: errData.steps.map(h => `h=${h}`),
+          datasets: [
+            { label: "Euler", data: errData.eulerErr, borderColor: "#f5a623", backgroundColor: "transparent", borderWidth: 1.5, pointRadius: 3, tension: .3 },
+            { label: "Heun", data: errData.heunErr, borderColor: "#4d9de0", backgroundColor: "transparent", borderWidth: 1.5, pointRadius: 3, tension: .3 },
+            { label: "RK4", data: errData.rk4Err, borderColor: "#34c759", backgroundColor: "transparent", borderWidth: 1.5, pointRadius: 3, tension: .3 },
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false, animation: { duration: 500 },
+          scales: {
+            x: { ticks: { color: "#5a5850", font: { family: "Space Mono", size: 7 } }, grid: { color: "rgba(42,42,38,.4)" } },
+            y: {
+              ticks: { color: "#5a5850", font: { family: "Space Mono", size: 7 } }, grid: { color: "rgba(42,42,38,.4)" }, beginAtZero: true,
+              title: { display: true, text: "Error (L)", color: "#5a5850", font: { family: "Space Mono", size: 8 } }
+            }
+          },
+          plugins: {
+            legend: { labels: { color: "#9a9688", font: { family: "Space Mono", size: 8 }, boxWidth: 8, padding: 6 } },
+            tooltip: { backgroundColor: "#181816", borderColor: "#3a3a34", borderWidth: 1, titleColor: "#f5a623", bodyColor: "#9a9688", titleFont: { family: "Space Mono", size: 8 }, bodyFont: { family: "Space Mono", size: 8 } }
+          }
+        }
+      });
+    }
+
+    /* ═══════════════════════════════════════════════
+       GAUGE
+    ═══════════════════════════════════════════════ */
+    function updateGauge(Rfinal, R0, Rc) {
+      const g = document.getElementById("gaugeOverlay"); g.style.display = "block";
+      const pct = Math.max(0, Math.min(100, Rfinal / R0 * 100));
+      const col = pct < Rc / R0 * 100 + 5 ? "#ff3b30" : pct < 30 ? "#f5a623" : "#34c759";
+      document.getElementById("gaugeVal").textContent = Math.max(0, Rfinal).toFixed(0);
+      document.getElementById("gaugeVal").style.color = col;
+      const bar = document.getElementById("gaugeBar");
+      bar.style.background = col;
+      setTimeout(() => bar.style.width = pct + "%", 100);
+      document.getElementById("gaugeLabel").textContent = pct < 5 ? "⚠ AGOTADO" : pct < 20 ? "CRÍTICO" : pct < 50 ? "BAJO" : "OPERATIVO";
+      document.getElementById("gaugeLabel").style.color = col;
+    }
+
+    /* ═══════════════════════════════════════════════
+       RIGHT PANEL — COMPARISON TABLE + ANSWERS
+    ═══════════════════════════════════════════════ */
+    function renderComparison(results, Rc, refRK4) {
+      const tbody = document.getElementById("cmpBody"); tbody.innerHTML = "";
+      results.forEach((res, ri) => {
+        const critDay = findCriticalDay(res.t, res.R, Rc);
+        const Rfinal = Math.max(0, res.R[res.R.length - 1]);
+        const refFinal = refRK4 ? Math.max(0, refRK4.R[refRK4.R.length - 1]) : Rfinal;
+        const err = refRK4 && res.method !== "RK4" ? Math.abs(Rfinal - refFinal) : 0;
+        const isBest = res.method === "RK4";
+        const tr = document.createElement("tr"); if (isBest) tr.className = "best";
+        const dot = `<span class="method-dot" style="background:${METHOD_COLORS[res.method.toLowerCase().replace(" (trapecio)", "").replace("runge-kutta 4", "rk4")]}"></span>`;
+        tr.innerHTML = `<td>${dot}${res.method}</td>
+      <td class="${critDay ? "danger" : "ok"}">${critDay ? critDay.toFixed(1) + "d" : "No crítico"}</td>
+      <td class="r ${Rfinal < Rc + 10 ? "danger" : Rfinal < Rc * 2 ? "warn" : ""}">${Rfinal.toFixed(1)}</td>
+      <td class="r ${isBest ? "win" : ""}">${isBest ? "—(ref)" : err.toFixed(2)}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderAnswers(params, results, Rc) {
+      const aw = document.getElementById("answersSection"); aw.innerHTML = "";
+      const rk4 = results.find(r => r.method === "RK4") || results[0];
+      const euler = results.find(r => r.method === "Euler");
+      const heun = results.find(r => r.method === "Heun (Trapecio)");
+
+      // Q1: cuántos días hasta crítico
+      const critDay = findCriticalDay(rk4.t, rk4.R, Rc);
+      addAnswer(aw, critDay ? "crit" : "ok", "¿En cuántos días llega al nivel crítico?",
+        critDay ? `La reserva alcanza el nivel crítico (<b style="color:var(--danger)">${Rc} L</b>) en aproximadamente <b style="color:var(--fuel)">${critDay.toFixed(1)} días</b> según RK4. Requiere intervención urgente.` : `La reserva no llega al nivel crítico en los ${params.days} días simulados. El sistema es sostenible bajo estas condiciones.`);
+
+      // Q2: consumo aumenta
+      const netFlow = params.E * (1 - params.beta) - params.C * (1 + params.alpha);
+      addAnswer(aw, netFlow < -100 ? "crit" : netFlow < 0 ? "warn" : "ok", "¿Qué pasa si aumenta el consumo diario?",
+        `Flujo neto actual: <b style="color:var(--fuel)">${netFlow.toFixed(0)} L/día</b>. ${netFlow < 0 ? `El sistema pierde ${Math.abs(netFlow).toFixed(0)} L/día. Un aumento adicional del 10% en consumo reduciría los días hasta el colapso en ~${(Rc / Math.abs(netFlow) * 0.1 * 10).toFixed(1)} días más.` : `El sistema es sostenible. El consumo puede aumentar hasta ${(params.E * (1 - params.beta) - params.C).toFixed(0)} L/día antes de volverse crítico.`}`);
+
+      // Q3: reducción abastecimiento
+      const effE = params.E * (1 - params.beta);
+      addAnswer(aw, params.beta > 0.5 ? "crit" : params.beta > 0.2 ? "warn" : "ok", "¿Qué pasa si se reduce el abastecimiento?",
+        `Abastecimiento efectivo actual: <b style="color:var(--fuel)">${effE.toFixed(0)} L/día</b> (reducción β=${params.beta.toFixed(2)}). ${params.beta > 0.5 ? `Con ${(params.beta * 100).toFixed(0)}% de reducción, el sistema colapsa rápidamente. La planta opera casi exclusivamente con reservas.` : `La reducción actual es manejable. Si aumenta a >60%, el colapso sería inminente.`}`);
+
+      // Q4: estabilidad del método
+      const errE = euler ? Math.abs(Math.max(0, euler.R[euler.R.length - 1]) - Math.max(0, rk4.R[rk4.R.length - 1])) : 0;
+      const errH = heun ? Math.abs(Math.max(0, heun.R[heun.R.length - 1]) - Math.max(0, rk4.R[rk4.R.length - 1])) : 0;
+      addAnswer(aw, "ok", "¿Qué método da una aproximación más estable?",
+        `<b style="color:var(--rk4)">RK4 es el más estable y preciso</b> (error de referencia = 0). Heun tiene error de ${errH.toFixed(1)} L. Euler acumula ${errE.toFixed(1)} L de error al final. RK4 usa 4 evaluaciones de f por paso; Euler solo 1.`);
+
+      // Q5: diferencias
+      addAnswer(aw, "ok", "¿Cuál es la diferencia entre Euler, Heun y RK4?",
+        `<b style="color:var(--euler)">Euler</b>: O(h) — usa la pendiente inicial del paso. Simple pero acumula error rápido.<br><b style="color:var(--heun)">Heun</b>: O(h²) — promedia pendiente inicial y final (método predictor-corrector).<br><b style="color:var(--rk4)">RK4</b>: O(h⁴) — promedia 4 pendientes intermedias. <b>16× más preciso</b> que Euler con igual h.`);
+    }
+
+    function addAnswer(c, type, q, a) {
+      const cls = { ok: "ans-ok", warn: "ans-warn", crit: "ans-crit" }[type] || "ans-ok";
+      const tagTxt = { ok: "RESPUESTA", "warn": "ALERTA", "crit": "CRÍTICO" }[type] || "RESPUESTA";
+      const d = document.createElement("div"); d.className = `answer-item ${cls}`;
+      d.innerHTML = `<span class="ans-tag">${tagTxt}</span><b style="color:var(--fg2)">${q}</b><br>${a}`;
+      c.appendChild(d);
+    }
+
+    /* ═══════════════════════════════════════════════
+       MAIN RUN
+    ═══════════════════════════════════════════════ */
+    function handleRun() {
+      if (!_activeSc) { alert("Seleccione un escenario."); return }
+      const sc = _activeSc;
+      const p = readParams();
+      const showAll = document.getElementById("showAll").checked;
+      const overlay = document.getElementById("runOverlay");
+      const msgs = ["FORMULANDO EDO...", "APLICANDO EULER...", "APLICANDO HEUN...", "APLICANDO RK4...", "CALCULANDO ERRORES...", "RENDERIZANDO..."];
+      let mi = 0; overlay.classList.add("show"); document.getElementById("btnRun").disabled = true;
+      document.getElementById("runMsg").textContent = "SIMULANDO";
+      document.getElementById("runSub").textContent = msgs[0];
+      setStep(2, sc);
+      const iv = setInterval(() => { mi = (mi + 1) % msgs.length; document.getElementById("runSub").textContent = msgs[mi] }, 300);
+
+      setTimeout(() => {
+        clearInterval(iv);
+        const f = makeODE(p.E, p.C, p.alpha, p.beta, p.days);
+
+        // Always compute all three for comparison table
+        const rEuler = solveEuler(f, p.R0, p.days, p.h);
+        rEuler.method = "Euler";
+        const rHeun = solveHeun(f, p.R0, p.days, p.h);
+        rHeun.method = "Heun (Trapecio)";
+        const rRK4 = solveRK4(f, p.R0, p.days, p.h);
+        rRK4.method = "RK4";
+
+        const allResults = [rEuler, rHeun, rRK4];
+
+        // Build chart datasets
+        let toShow;
+        if (showAll) {
+          toShow = allResults;
+        } else {
+          const selMap = { euler: rEuler, heun: rHeun, rk4: rRK4 };
+          toShow = [selMap[_selMethod] || rRK4];
+        }
+
+        const methodColorKey = (m) => m === "Euler" ? "euler" : m === "Heun (Trapecio)" ? "heun" : "rk4";
+        const datasets = toShow.map(res => {
+          const ck = methodColorKey(res.method);
+          const pts = res.t.map((t, i) => ({ x: t, y: Math.max(0, res.R[i]) }));
+          return {
+            label: METHOD_LABELS[ck] || res.method,
+            data: pts,
+            borderColor: METHOD_COLORS[ck],
+            backgroundColor: "transparent",
+            borderWidth: 2, pointRadius: 0, tension: .3,
+          };
+        });
+
+        renderMainChart(datasets, p.days, p.Rc);
+
+        // Critical status
+        const critDay = findCriticalDay(rRK4.t, rRK4.R, p.Rc);
+        const Rfinal = Math.max(0, rRK4.R[rRK4.R.length - 1]);
+        const isCrit = critDay !== null || Rfinal <= p.Rc;
+        document.getElementById("critBadge").style.display = isCrit ? "inline" : "none";
+        document.getElementById("criticalBadge").style.display = isCrit ? "block" : "none";
+
+        // Result cards
+        const totalConsumed = p.R0 - Rfinal;
+        const errRef = Math.abs(Math.max(0, rEuler.R[rEuler.R.length - 1]) - Rfinal);
+        setResCard("rDays", critDay ? critDay.toFixed(1) : "—", critDay ? "fcrit" : Rfinal < p.Rc * 2 ? "fwarn" : "fok");
+        setResCard("rFinal", Rfinal.toFixed(0), Rfinal <= p.Rc ? "fcrit" : Rfinal < p.Rc * 2 ? "fwarn" : "fok");
+        setResCard("rTotal", totalConsumed.toFixed(0), "fwarn");
+        setResCard("rError", errRef.toFixed(1), "fdim");
+
+        updateGauge(Rfinal, p.R0, p.Rc);
+
+        // Comparison table
+        renderComparison(allResults, p.Rc, rRK4);
+
+        // Error vs h chart
+        const errData = errorVsH(f, p.R0, p.days, p.Rc);
+        renderErrorChart(errData);
+
+        // Answers
+        renderAnswers(p, allResults, p.Rc);
+
+        // Chart subtitle
+        document.getElementById("chartSub").textContent =
+          `h=${p.h} | α=${p.alpha.toFixed(2)} | β=${p.beta.toFixed(2)} | ${critDay ? `Crisis en día ${critDay.toFixed(1)}` : "Sin nivel crítico en horizonte"}`;
+
+        overlay.classList.remove("show"); document.getElementById("btnRun").disabled = false;
+        setStep(3, sc);
+      }, 1800);
+    }
+
+    function setResCard(id, val, cls) { const e = document.getElementById(id); e.textContent = val; e.className = "res-val " + cls }
+
+    /* ═══════════════════════════════════════════════
+       CLOCK + BOOT
+    ═══════════════════════════════════════════════ */
+    setInterval(() => document.getElementById("hClock").textContent = new Date().toTimeString().slice(0, 8), 1000);
+    buildScenarios();
+    buildMethodGrid();
+    selectScenario(SCENARIOS[0]);
+  </script>
+</body>
+
+</html>

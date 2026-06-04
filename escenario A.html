@@ -1,0 +1,2620 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>REDVIV — Distribución Nacional de Víveres · Bolivia</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@600;700;800&family=Inter:wght@300;400;500;600&display=swap"
+    rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <style>
+    /* ═══════════════════════════════════════════════════════════════════
+   REDVIV — Distribución Nacional de Víveres · Bolivia
+   DISEÑO SISTEMA: Inspirado en InterpCalc (Acento Amarillo)
+   ═══════════════════════════════════════════════════════════════════ */
+
+    @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500;700&family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600&display=swap');
+
+    /* ═══════════════════════════════════════════════════════════════════
+   TOKENS — Paleta del sistema (Amarillo primario)
+═══════════════════════════════════════════════════════════════════ */
+    :root {
+      /* Base — Fondos oscuros tipo InterpCalc */
+      --bg: #0d0f14;
+      --surface: #13161e;
+      --surface2: #1a1e2a;
+      --surface3: #222736;
+      --border: #2a2f40;
+      --border2: #353d52;
+      --border3: #3d4560;
+
+      /* Acentos principales (amarillo/dorado como primario) */
+      --accent: #e8c547;
+      --accent-dim: #c4a132;
+      --accent-glow: rgba(232, 197, 71, 0.12);
+
+      /* Acentos secundarios (azul, rojo, verde) */
+      --accent2: #5b9bd5;
+      --accent3: #e05a5a;
+      --accent4: #5bcfa8;
+      --purple: #a78bfa;
+      --purple-glow: rgba(167, 139, 250, 0.12);
+
+      /* Colores funcionales */
+      --teal: #5bcfa8;
+      --teal-dim: #3bb58c;
+      --teal-glow: rgba(91, 207, 168, 0.1);
+      --amber: #e8c547;
+      --amber-glow: rgba(232, 197, 71, 0.1);
+      --red: #e05a5a;
+      --red-glow: rgba(224, 90, 90, 0.1);
+      --blue: #5b9bd5;
+      --blue-glow: rgba(91, 155, 213, 0.1);
+
+      /* Tipografía */
+      --text: #e8eaf2;
+      --text-muted: #7a80a0;
+      --text-dim: #3d4260;
+
+      /* Fuentes */
+      --font-display: 'Syne', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --font-ui: 'Inter', sans-serif;
+
+      /* Espaciado */
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      min-height: 100%;
+      overflow: auto;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-ui);
+      font-size: 13px;
+      font-weight: 400;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Scrollbar moderno */
+    ::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--surface);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--surface3);
+      border-radius: 2px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--border3);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+   SHELL — Layout principal
+═══════════════════════════════════════════════════════════════════ */
+    .shell {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      min-height: 100vh;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+   TOPBAR — Barra superior (estilo InterpCalc)
+═══════════════════════════════════════════════════════════════════ */
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 0 20px;
+      background: rgba(19, 22, 30, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      z-index: 20;
+      flex-shrink: 0;
+    }
+
+    .logo {
+      font-family: var(--font-display);
+      font-size: 17px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: var(--text);
+    }
+
+    .logo em {
+      color: var(--accent);
+      font-style: normal;
+      font-weight: 800;
+    }
+
+    .vsep {
+      width: 1px;
+      height: 20px;
+      background: var(--border2);
+    }
+
+    .topbar-sub {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+    }
+
+    .spacer {
+      flex: 1;
+    }
+
+    .live {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .live-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent4);
+      box-shadow: 0 0 6px var(--accent4);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.3;
+      }
+    }
+
+    #topClock {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 1px;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+   TAB BAR — Navegación estilo InterpCalc
+═══════════════════════════════════════════════════════════════════ */
+    .tab-bar {
+      display: flex;
+      gap: 2px;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      padding: 0 20px;
+      flex-shrink: 0;
+    }
+
+    .tab-btn {
+      padding: 8px 16px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      border: none;
+      background: none;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: var(--transition);
+      text-transform: uppercase;
+    }
+
+    .tab-btn:hover {
+      color: var(--text);
+    }
+
+    .tab-btn.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .tab-pane {
+      display: none;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .tab-pane.active {
+      display: flex;
+    }
+
+    .body-wrap {
+      display: grid;
+      grid-template-rows: 36px 1fr;
+      min-height: calc(100vh - 52px);
+      overflow: auto;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+   MAP GRID — Layout de 3 columnas
+═══════════════════════════════════════════════════════════════════ */
+    .map-grid {
+      display: grid;
+      grid-template-columns: 280px 1fr 340px;
+      min-height: 100%;
+      overflow: auto;
+    }
+
+    @media (max-width: 1100px) {
+      .map-grid {
+        grid-template-columns: 240px 1fr 300px;
+      }
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+   PANELES — Estilo InterpCalc
+═══════════════════════════════════════════════════════════════════ */
+    .panel {
+      background: var(--surface);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .panel-scroll {
+      overflow-y: auto;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .panel.bordered-r {
+      border-right: 1px solid var(--border);
+    }
+
+    .panel.bordered-l {
+      border-left: 1px solid var(--border);
+    }
+
+    /* Section headers */
+    .sh {
+      padding: 9px 14px 7px;
+      border-bottom: 1px solid var(--border);
+      font-family: var(--font-mono);
+      font-size: 9px;
+      font-weight: 600;
+      color: var(--text-muted);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(26, 30, 42, 0.5);
+      flex-shrink: 0;
+    }
+
+    .sh-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* Tarjetas de escenarios */
+    .sc-list {
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      flex-shrink: 0;
+    }
+
+    .sc-card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 9px 11px;
+      cursor: pointer;
+      background: var(--surface2);
+      transition: var(--transition);
+    }
+
+    .sc-card:hover {
+      border-color: var(--border3);
+    }
+
+    .sc-card.active {
+      border-color: var(--accent);
+      background: var(--accent-glow);
+    }
+
+    .sc-name {
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 2px;
+    }
+
+    .sc-card.active .sc-name {
+      color: var(--accent);
+    }
+
+    .sc-desc {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .sc-tags {
+      display: flex;
+      gap: 4px;
+      margin-top: 4px;
+      flex-wrap: wrap;
+    }
+
+    .tag {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 8px;
+      font-weight: 500;
+      padding: 2px 5px;
+      border-radius: 100px;
+      letter-spacing: 0.5px;
+    }
+
+    .tag-ok {
+      background: rgba(91, 207, 168, 0.12);
+      color: var(--teal);
+      border: 1px solid rgba(91, 207, 168, 0.2);
+    }
+
+    .tag-warn {
+      background: var(--accent-glow);
+      color: var(--accent);
+      border: 1px solid rgba(232, 197, 71, 0.2);
+    }
+
+    .tag-crit {
+      background: var(--red-glow);
+      color: var(--red);
+      border: 1px solid rgba(224, 90, 90, 0.2);
+    }
+
+    /* Métodos numéricos */
+    .method-wrap {
+      padding: 10px 12px;
+      flex-shrink: 0;
+    }
+
+    .method-label {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      font-weight: 600;
+      color: var(--text-muted);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 5px;
+    }
+
+    .method-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+    }
+
+    .mth-btn {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      font-size: 9px;
+      font-weight: 500;
+      padding: 5px 7px;
+      cursor: pointer;
+      transition: var(--transition);
+      letter-spacing: 0.5px;
+      text-align: center;
+    }
+
+    .mth-btn:hover {
+      border-color: var(--border3);
+      color: var(--text);
+    }
+
+    .mth-btn.active {
+      border-color: var(--purple);
+      background: var(--purple-glow);
+      color: var(--purple);
+    }
+
+    /* SOR slider */
+    .sor-wrap {
+      margin-top: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sor-label {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    input[type='range'].sor-slider {
+      flex: 1;
+      -webkit-appearance: none;
+      height: 3px;
+      background: var(--border2);
+      border-radius: 2px;
+      outline: none;
+    }
+
+    input[type='range'].sor-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--purple);
+      cursor: pointer;
+    }
+
+    .sor-val {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--purple);
+      min-width: 28px;
+    }
+
+    /* Matriz UI */
+    .matrix-wrap {
+      padding: 10px 12px;
+      flex-shrink: 0;
+    }
+
+    .mx-col-labels {
+      display: grid;
+      gap: 2px;
+      margin-bottom: 2px;
+      font-family: var(--font-mono);
+      font-size: 8px;
+      color: var(--text-muted);
+      text-align: center;
+      letter-spacing: 0.5px;
+    }
+
+    .mx-grid {
+      display: grid;
+      gap: 2px;
+    }
+
+    .mx-row-lbl {
+      font-family: var(--font-mono);
+      font-size: 8px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      padding: 0 3px;
+    }
+
+    input.mxi {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius-sm);
+      color: var(--accent);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      padding: 4px 3px;
+      text-align: center;
+      width: 100%;
+      outline: none;
+      transition: var(--transition);
+    }
+
+    input.mxi:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-glow);
+    }
+
+    input.mxi.blocked {
+      color: var(--red);
+      border-color: var(--red-glow);
+    }
+
+    input.mxi.cost-field {
+      color: var(--accent2);
+    }
+
+    .vec-b-row {
+      display: grid;
+      gap: 2px;
+      margin-top: 6px;
+    }
+
+    .vec-b-lbl {
+      font-family: var(--font-mono);
+      font-size: 8px;
+      color: var(--text-muted);
+    }
+
+    .mx-note {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin-top: 7px;
+      padding: 6px 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+    }
+
+    .mx-note b {
+      color: var(--purple);
+    }
+
+    /* KPIs */
+    .kpi-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5px;
+      padding: 8px;
+    }
+
+    .kpi {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 7px 9px;
+    }
+
+    .kpi-lbl {
+      font-family: var(--font-mono);
+      font-size: 7px;
+      font-weight: 600;
+      color: var(--text-muted);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .kpi-val {
+      font-family: var(--font-display);
+      font-size: 15px;
+      font-weight: 800;
+      line-height: 1.1;
+      margin-top: 1px;
+    }
+
+    .kpi-unit {
+      font-family: var(--font-mono);
+      font-size: 7px;
+      color: var(--text-muted);
+      margin-top: 1px;
+    }
+
+    .ok {
+      color: var(--teal);
+    }
+
+    .warn {
+      color: var(--accent);
+    }
+
+    .bad {
+      color: var(--red);
+    }
+
+    .dim {
+      color: var(--text-muted);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+   MAP CENTER — Visualización SVG
+═══════════════════════════════════════════════════════════════════ */
+    .map-center {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--bg);
+    }
+
+    .map-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 14px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(13, 15, 20, 0.85);
+      backdrop-filter: blur(6px);
+      flex-shrink: 0;
+      z-index: 5;
+    }
+
+    .map-title {
+      font-family: var(--font-display);
+      font-size: 12px;
+      font-weight: 700;
+      flex: 1;
+    }
+
+    .map-sub {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--text-muted);
+    }
+
+    .btn-solve {
+      background: var(--accent);
+      color: #000;
+      border: none;
+      border-radius: var(--radius-md);
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 6px 14px;
+      cursor: pointer;
+      transition: var(--transition);
+      white-space: nowrap;
+    }
+
+    .btn-solve:hover {
+      background: var(--accent-dim);
+      box-shadow: 0 4px 12px var(--accent-glow);
+    }
+
+    .btn-solve:disabled {
+      background: var(--border2);
+      color: var(--text-muted);
+      cursor: not-allowed;
+    }
+
+    .map-area {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #mainSVG {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* Tooltip SVG */
+    .tip {
+      position: absolute;
+      pointer-events: none;
+      z-index: 30;
+      background: var(--surface2);
+      border: 1px solid var(--border3);
+      border-radius: var(--radius-md);
+      padding: 8px 11px;
+      min-width: 155px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+
+    .tip.show {
+      opacity: 1;
+    }
+
+    .tip-name {
+      font-family: var(--font-display);
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .tip-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 2px;
+      color: var(--text-muted);
+    }
+
+    .tip-v {
+      color: var(--accent);
+    }
+
+    .tip-v.cost {
+      color: var(--accent2);
+    }
+
+    /* Leyenda del mapa */
+    .map-overlay-legend {
+      position: absolute;
+      bottom: 12px;
+      left: 12px;
+      z-index: 10;
+      background: rgba(26, 30, 42, 0.88);
+      backdrop-filter: blur(6px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 8px 11px;
+      font-family: var(--font-mono);
+      font-size: 9px;
+    }
+
+    .ml-title {
+      color: var(--text-muted);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .ml-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-muted);
+      margin-bottom: 3px;
+    }
+
+    .ml-line {
+      width: 16px;
+      height: 2px;
+      border-radius: 1px;
+    }
+
+    .ml-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      border: 2px solid;
+    }
+
+    /* Overlay de cálculo */
+    .solving-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 20;
+      background: rgba(13, 15, 20, 0.85);
+      backdrop-filter: blur(4px);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+    }
+
+    .solving-overlay.show {
+      display: flex;
+    }
+
+    .ring {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      border: 2px solid var(--border2);
+      border-top-color: var(--accent);
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .solving-msg {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-muted);
+      letter-spacing: 1px;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+   PANEL DERECHO — Análisis y resultados
+═══════════════════════════════════════════════════════════════════ */
+    .step-wrap {
+      padding: 10px 13px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .step-ind {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+      margin-bottom: 7px;
+    }
+
+    .step-dot {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 2px solid var(--border2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 8px;
+      font-weight: 500;
+      color: var(--text-muted);
+      flex-shrink: 0;
+      transition: var(--transition);
+    }
+
+    .step-dot.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-glow);
+    }
+
+    .step-dot.done {
+      border-color: var(--accent-dim);
+      background: var(--accent-dim);
+      color: #000;
+    }
+
+    .step-line {
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .step-title {
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 3px;
+    }
+
+    .step-body {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .step-body b {
+      color: var(--accent2);
+    }
+
+    /* Tabla de flujos */
+    .flow-section {
+      padding: 9px 13px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .section-title {
+      font-family: var(--font-mono);
+      font-size: 8px;
+      font-weight: 600;
+      color: var(--text-muted);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .flow-tbl {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .flow-tbl th {
+      font-family: var(--font-mono);
+      font-size: 8px;
+      font-weight: 600;
+      color: var(--text-muted);
+      letter-spacing: 0.8px;
+      padding: 3px 5px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .flow-tbl td {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      padding: 3px 5px;
+      border-bottom: 1px solid rgba(42, 47, 64, 0.4);
+      color: var(--text-muted);
+    }
+
+    .flow-tbl td.r {
+      text-align: right;
+    }
+
+    .flow-tbl td.vt {
+      color: var(--teal);
+    }
+
+    .flow-tbl td.va {
+      color: var(--accent);
+    }
+
+    .flow-tbl td.vr {
+      color: var(--red);
+    }
+
+    .flow-tbl tr.brow td {
+      color: rgba(224, 90, 90, 0.45);
+    }
+
+    .fbadge {
+      display: inline-block;
+      padding: 1px 4px;
+      border-radius: 2px;
+      font-size: 7px;
+      font-family: var(--font-mono);
+    }
+
+    .fb-ok {
+      background: rgba(91, 207, 168, 0.1);
+      color: var(--teal);
+    }
+
+    .fb-w {
+      background: var(--accent-glow);
+      color: var(--accent);
+    }
+
+    .fb-b {
+      background: var(--red-glow);
+      color: var(--red);
+    }
+
+    /* Zonas */
+    .zone-section {
+      padding: 9px 13px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .zbar-row {
+      margin-bottom: 5px;
+    }
+
+    .zbar-head {
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 8px;
+      margin-bottom: 2px;
+    }
+
+    .zbar-name {
+      color: var(--text-muted);
+    }
+
+    .zbar-val {
+      color: var(--accent);
+    }
+
+    .zbar-track {
+      height: 4px;
+      background: var(--surface);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .zbar-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Costo */
+    .cost-box {
+      margin: 9px 13px;
+      padding: 9px 11px;
+      background: var(--accent-glow);
+      border: 1px solid rgba(232, 197, 71, 0.2);
+      border-radius: var(--radius-md);
+      flex-shrink: 0;
+    }
+
+    .cost-title {
+      font-family: var(--font-mono);
+      font-size: 8px;
+      font-weight: 600;
+      color: var(--accent);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 5px;
+    }
+
+    .cost-row {
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 9px;
+      margin-bottom: 3px;
+      color: var(--text-muted);
+    }
+
+    .cost-val {
+      color: var(--accent);
+    }
+
+    .cost-total {
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--font-display);
+      font-size: 13px;
+      font-weight: 700;
+      margin-top: 4px;
+      padding-top: 4px;
+      border-top: 1px solid rgba(232, 197, 71, 0.2);
+    }
+
+    .cost-total-lbl {
+      color: var(--text-muted);
+    }
+
+    .cost-total-val {
+      color: var(--accent);
+    }
+
+    /* Alertas */
+    .alerts-wrap {
+      padding: 9px 13px;
+      flex-shrink: 0;
+    }
+
+    .alert {
+      border-left: 2px solid;
+      padding: 6px 9px;
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      margin-bottom: 5px;
+      font-family: var(--font-mono);
+      font-size: 9px;
+      line-height: 1.5;
+    }
+
+    .alert.ok {
+      border-color: var(--teal);
+      background: var(--teal-glow);
+      color: var(--text-muted);
+    }
+
+    .alert.warn {
+      border-color: var(--accent);
+      background: var(--accent-glow);
+      color: var(--text-muted);
+    }
+
+    .alert.crit {
+      border-color: var(--red);
+      background: var(--red-glow);
+      color: var(--text-muted);
+    }
+
+    .alert.info {
+      border-color: var(--accent2);
+      background: var(--blue-glow);
+      color: var(--text-muted);
+    }
+
+    .alert-tag {
+      font-size: 7px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+   SENSIBILIDAD — Pestaña análisis
+═══════════════════════════════════════════════════════════════════ */
+    .sens-layout {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .sens-left {
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 14px;
+      background: var(--surface);
+    }
+
+    .sens-right {
+      overflow-y: auto;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .sens-title {
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .sens-sub {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 14px;
+    }
+
+    .slider-group {
+      margin-bottom: 12px;
+    }
+
+    .slider-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .slider-name {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      font-weight: 500;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+    }
+
+    .slider-pct {
+      font-family: var(--font-display);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    input[type='range'].sens-slider {
+      width: 100%;
+      -webkit-appearance: none;
+      height: 3px;
+      background: var(--border2);
+      border-radius: 2px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type='range'].sens-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      box-shadow: 0 0 6px var(--accent-glow);
+    }
+
+    .btn-sens {
+      width: 100%;
+      background: var(--accent);
+      color: #000;
+      border: none;
+      border-radius: var(--radius-md);
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 9px;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: var(--transition);
+    }
+
+    .btn-sens:hover {
+      background: var(--accent-dim);
+    }
+
+    .sens-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 12px;
+    }
+
+    .sens-card-title {
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .sens-tbl {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--font-mono);
+      font-size: 10px;
+    }
+
+    .sens-tbl th {
+      color: var(--text-muted);
+      font-size: 8px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      padding: 4px 6px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+    }
+
+    .sens-tbl td {
+      padding: 4px 6px;
+      border-bottom: 1px solid rgba(42, 47, 64, 0.4);
+      color: var(--text-muted);
+    }
+
+    .sens-tbl td.pos {
+      color: var(--teal);
+    }
+
+    .sens-tbl td.neg {
+      color: var(--red);
+    }
+
+    .sens-tbl td.neu {
+      color: var(--text-muted);
+    }
+
+    .delta-badge {
+      display: inline-block;
+      padding: 1px 5px;
+      border-radius: 100px;
+      font-size: 8px;
+      font-family: var(--font-mono);
+    }
+
+    .delta-pos {
+      background: rgba(91, 207, 168, 0.12);
+      color: var(--teal);
+    }
+
+    .delta-neg {
+      background: var(--red-glow);
+      color: var(--red);
+    }
+
+    .delta-neu {
+      background: rgba(122, 147, 170, 0.1);
+      color: var(--text-muted);
+    }
+
+    .stability-meter {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .stability-bar-track {
+      flex: 1;
+      height: 6px;
+      background: var(--surface);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .stability-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.8s;
+    }
+
+    .stability-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      min-width: 60px;
+    }
+
+    .chart-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 12px;
+    }
+
+    .chart-card-title {
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .chart-h220 {
+      height: 220px;
+      position: relative;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+   COMPARAR MÉTODOS — Pestaña
+═══════════════════════════════════════════════════════════════════ */
+    .methods-layout {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .methods-left {
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: var(--surface);
+    }
+
+    .methods-right {
+      overflow-y: auto;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .methods-title {
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 3px;
+    }
+
+    .methods-sub {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin-bottom: 8px;
+    }
+
+    .compare-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .cmp-stat {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 8px 10px;
+      text-align: center;
+    }
+
+    .cmp-stat-lbl {
+      font-family: var(--font-mono);
+      font-size: 8px;
+      font-weight: 600;
+      color: var(--text-muted);
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      margin-bottom: 3px;
+    }
+
+    .cmp-stat-val {
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 800;
+    }
+
+    .cmp-tbl {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--font-mono);
+      font-size: 10px;
+    }
+
+    .cmp-tbl th {
+      color: var(--text-muted);
+      font-size: 8px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      padding: 5px 7px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+    }
+
+    .cmp-tbl td {
+      padding: 5px 7px;
+      border-bottom: 1px solid rgba(42, 47, 64, 0.4);
+      color: var(--text-muted);
+    }
+
+    .cmp-tbl tr.best-row td {
+      background: var(--accent-glow);
+    }
+
+    .cmp-tbl td.winner {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .method-desc-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .method-desc-card:hover {
+      border-color: var(--border3);
+    }
+
+    .method-desc-name {
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 3px;
+    }
+
+    .method-desc-body {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .btn-compare {
+      width: 100%;
+      background: var(--purple);
+      color: #000;
+      border: none;
+      border-radius: var(--radius-md);
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 9px;
+      cursor: pointer;
+      transition: var(--transition);
+      margin-top: 4px;
+    }
+
+    .btn-compare:hover {
+      background: var(--purple);
+      opacity: 0.85;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════════════════════════════ */
+    @media (max-width: 960px) {
+      .map-grid {
+        grid-template-columns: 1fr;
+        overflow-y: auto;
+      }
+
+      .panel.bordered-r,
+      .panel.bordered-l {
+        border: none;
+      }
+
+      .sens-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .methods-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Ocultar título del escenario (se muestra en el navbar) */
+    .topbar {
+      display: none !important;
+    }
+  </style>
+
+</head>
+
+<body>
+  <div class="shell">
+
+    <div class="topbar">
+      <div class="logo">RED<em>VIV</em></div>
+      <div class="vsep"></div>
+      <div class="topbar-sub">Sistema Nacional de Distribución de Víveres · Bolivia</div>
+      <div class="spacer"></div>
+      <div class="live">
+        <div class="live-dot"></div>EN OPERACIÓN
+      </div>
+      <div class="vsep"></div>
+      <div id="topClock">--:--:--</div>
+    </div>
+
+    <div class="body-wrap">
+      <div class="tab-bar">
+        <button class="tab-btn active" onclick="switchTab('map',this)">🗺 RED &amp; DISTRIBUCIÓN</button>
+        <button class="tab-btn" onclick="switchTab('sens',this)">📊 SENSIBILIDAD</button>
+        <button class="tab-btn" onclick="switchTab('methods',this)">⚙ COMPARAR MÉTODOS</button>
+      </div>
+
+      <div class="tab-pane active" id="tab-map">
+        <div class="map-grid" style="width:100%;height:100%">
+
+          <div class="panel bordered-r">
+            <div class="panel-scroll">
+              <div class="sh">
+                <div class="sh-dot" style="background:var(--teal)"></div>ESCENARIOS
+              </div>
+              <div class="sc-list" id="scList"></div>
+
+              <div class="sh">
+                <div class="sh-dot" style="background:var(--purple)"></div>MÉTODO NUMÉRICO
+              </div>
+              <div class="method-wrap">
+                <div class="method-grid" id="methodGrid"></div>
+                <div class="sor-wrap" id="sorWrap" style="display:none">
+                  <span class="sor-label">ω SOR:</span>
+                  <input type="range" class="sor-slider" id="sorOmega" min="1.0" max="1.99" step="0.01" value="1.25" />
+                  <span class="sor-val" id="sorVal">1.25</span>
+                </div>
+              </div>
+
+              <div class="sh">
+                <div class="sh-dot" style="background:var(--purple)"></div>MATRIZ Ax = b
+              </div>
+              <div class="matrix-wrap">
+                <div class="mx-col-labels" id="mxColLbls" style="grid-template-columns:48px 1fr 1fr 1fr"></div>
+                <div class="mx-grid" id="mxGrid" style="grid-template-columns:48px 1fr 1fr 1fr"></div>
+                <div class="vec-b-row" id="vecBRow"></div>
+                <div
+                  style="font-family:var(--mono);font-size:8px;color:var(--amber);letter-spacing:.5px;margin-top:8px;margin-bottom:3px">
+                  COSTOS TRANSPORTE ($/T)</div>
+                <div class="mx-grid" id="costGrid" style="grid-template-columns:48px 1fr 1fr 1fr"></div>
+                <div class="mx-note"><b>Ax=b</b>: x = T/día por planta.<br>Costo total = Σ cᵢⱼ · flowᵢⱼ<br>Edite y
+                  presione <b>CALCULAR</b>.</div>
+              </div>
+
+              <div class="sh">
+                <div class="sh-dot" style="background:var(--amber)"></div>INDICADORES
+              </div>
+              <div class="kpi-row">
+                <div class="kpi">
+                  <div class="kpi-lbl">Flujo total</div>
+                  <div class="kpi-val dim" id="kFlux">—</div>
+                  <div class="kpi-unit">T/día</div>
+                </div>
+                <div class="kpi">
+                  <div class="kpi-lbl">Costo total</div>
+                  <div class="kpi-val dim" id="kCost">—</div>
+                  <div class="kpi-unit">$/día</div>
+                </div>
+                <div class="kpi">
+                  <div class="kpi-lbl">Déficit</div>
+                  <div class="kpi-val dim" id="kDef">—</div>
+                  <div class="kpi-unit">T sin cubrir</div>
+                </div>
+                <div class="kpi">
+                  <div class="kpi-lbl">Zonas OK</div>
+                  <div class="kpi-val dim" id="kZones">—</div>
+                  <div class="kpi-unit">de 3</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="map-center">
+            <div class="map-header">
+              <div>
+                <div class="map-title" id="mapTitle">Red Nacional de Víveres</div>
+                <div class="map-sub" id="mapSub">Seleccione escenario → CALCULAR</div>
+              </div>
+              <button class="btn-solve" id="btnSolve" onclick="handleSolve()">⚙ CALCULAR DISTRIBUCIÓN</button>
+            </div>
+            <div class="map-area">
+              <svg id="mainSVG" viewBox="0 0 760 500" preserveAspectRatio="xMidYMid meet"
+                xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <marker id="arr-t" markerWidth="5" markerHeight="4" refX="4" refY="2" orient="auto">
+                    <polygon points="0 0,5 2,0 4" fill="#00d4a8" opacity=".9" />
+                  </marker>
+                  <marker id="arr-a" markerWidth="5" markerHeight="4" refX="4" refY="2" orient="auto">
+                    <polygon points="0 0,5 2,0 4" fill="#f0a500" opacity=".9" />
+                  </marker>
+                  <marker id="arr-r" markerWidth="5" markerHeight="4" refX="4" refY="2" orient="auto">
+                    <polygon points="0 0,5 2,0 4" fill="#e05260" opacity=".6" />
+                  </marker>
+                  <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+                    <feGaussianBlur stdDeviation="2.5" result="b" />
+                    <feMerge>
+                      <feMergeNode in="b" />
+                      <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                  </filter>
+                  <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                    <path d="M40 0L0 0 0 40" fill="none" stroke="rgba(30,45,61,.3)" stroke-width=".5" />
+                  </pattern>
+                </defs>
+                <rect width="760" height="500" fill="url(#grid)" />
+                <rect width="760" height="500" fill="rgba(7,13,20,.2)" />
+                <path
+                  d="M155,95 Q200,70 260,85 Q320,65 370,90 Q430,68 480,95 Q530,110 550,165 Q575,220 560,280 Q545,345 510,395 Q470,440 410,458 Q345,472 280,462 Q215,450 185,408 Q158,368 148,315 Q130,260 142,205 Q148,148 155,95Z"
+                  fill="none" stroke="rgba(77,157,224,.1)" stroke-width="1.5" />
+                <g id="routeG"></g>
+                <g id="particleG"></g>
+                <g id="nodeG"></g>
+                <g id="labelG"></g>
+              </svg>
+              <div class="tip" id="tip"></div>
+              <div class="map-overlay-legend">
+                <div class="ml-title">LEYENDA</div>
+                <div class="ml-row">
+                  <div class="ml-dot" style="background:rgba(0,212,168,.2);border-color:var(--teal)"></div>Centro
+                  distribución
+                </div>
+                <div class="ml-row">
+                  <div class="ml-dot" style="background:rgba(77,157,224,.2);border-color:var(--blue)"></div>Zona
+                  abastecimiento
+                </div>
+                <div class="ml-row">
+                  <div class="ml-line" style="background:var(--teal)"></div>Ruta activa
+                </div>
+                <div class="ml-row">
+                  <div class="ml-line" style="background:var(--amber)"></div>Capacidad reducida
+                </div>
+                <div class="ml-row">
+                  <div class="ml-line" style="background:var(--red);opacity:.5"></div>Bloqueada
+                </div>
+              </div>
+              <div class="solving-overlay" id="solvingOverlay">
+                <div class="ring"></div>
+                <div class="solving-msg" id="solvingMsg">CALCULANDO...</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel bordered-l">
+            <div class="panel-scroll">
+              <div class="sh">
+                <div class="sh-dot" style="background:var(--blue)"></div>ANÁLISIS PASO A PASO
+              </div>
+              <div class="step-wrap">
+                <div class="step-ind">
+                  <div class="step-dot" id="sd1">1</div>
+                  <div class="step-line"></div>
+                  <div class="step-dot" id="sd2">2</div>
+                  <div class="step-line"></div>
+                  <div class="step-dot" id="sd3">3</div>
+                </div>
+                <div id="stepContent">
+                  <div class="step-title">Seleccione un escenario</div>
+                  <div class="step-body">Elija un escenario del panel izquierdo para ver el análisis.</div>
+                </div>
+              </div>
+
+              <div class="sh">
+                <div class="sh-dot" style="background:var(--teal)"></div>FLUJOS CALCULADOS
+              </div>
+              <div class="flow-section">
+                <table class="flow-tbl">
+                  <thead>
+                    <tr>
+                      <th>RUTA</th>
+                      <th>EST.</th>
+                      <th class="r">T/DÍA</th>
+                      <th class="r">$/DÍA</th>
+                    </tr>
+                  </thead>
+                  <tbody id="flowBody">
+                    <tr>
+                      <td colspan="4" style="color:var(--fg3);padding:7px 5px;font-size:9px">Sin resolver</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="sh">
+                <div class="sh-dot" style="background:var(--amber)"></div>COBERTURA POR ZONA
+              </div>
+              <div class="zone-section" id="zoneSection">
+                <div style="font-family:var(--mono);font-size:9px;color:var(--fg3);padding:5px">Sin datos</div>
+              </div>
+
+              <div id="costBoxWrap"></div>
+
+              <div class="sh">
+                <div class="sh-dot" style="background:var(--red)"></div>ALERTAS OPERATIVAS
+              </div>
+              <div class="alerts-wrap" id="alertsWrap">
+                <div class="alert info"><span class="alert-tag">SISTEMA</span>Configure y resuelva un escenario.</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="tab-pane" id="tab-sens">
+        <div class="sens-layout" style="width:100%;height:100%">
+          <div class="sens-left" style="background:var(--ink2);border-right:1px solid var(--border)">
+            <div class="sens-title">Análisis de Sensibilidad</div>
+            <div class="sens-sub">Evalúa cómo cambia la solución x cuando la demanda b varía. Identifica qué zonas hacen
+              al sistema más inestable.</div>
+
+            <div class="slider-group">
+              <div class="slider-head"><span class="slider-name">Zona Norte Δb₁</span><span class="slider-pct"
+                  id="sp0">+0%</span></div>
+              <input type="range" class="sens-slider" id="ss0" min="-30" max="30" value="0" step="5" />
+            </div>
+            <div class="slider-group">
+              <div class="slider-head"><span class="slider-name">Zona Central Δb₂</span><span class="slider-pct"
+                  id="sp1">+0%</span></div>
+              <input type="range" class="sens-slider" id="ss1" min="-30" max="30" value="0" step="5" />
+            </div>
+            <div class="slider-group">
+              <div class="slider-head"><span class="slider-name">Zona Sur Δb₃</span><span class="slider-pct"
+                  id="sp2">+0%</span></div>
+              <input type="range" class="sens-slider" id="ss2" min="-30" max="30" value="0" step="5" />
+            </div>
+
+            <div
+              style="font-family:var(--mono);font-size:8px;color:var(--fg3);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;margin-top:8px">
+              Escenario base</div>
+            <div id="sensScenarioName"
+              style="font-family:var(--display);font-size:12px;font-weight:700;color:var(--fg);margin-bottom:8px">—
+            </div>
+
+            <button class="btn-sens" onclick="runSensitivity()">📊 CALCULAR SENSIBILIDAD</button>
+
+            <div
+              style="margin-top:14px;font-family:var(--mono);font-size:9px;color:var(--fg3);line-height:1.6;padding:8px;background:var(--ink3);border:1px solid var(--border);border-radius:var(--r)">
+              <b style="color:var(--purple)">¿Qué mide esto?</b><br>
+              El índice de sensibilidad es ||Δx||/||Δb||. Si es &gt;1 el sistema amplifica perturbaciones (inestable).
+              Si es &lt;1 las amortigua (estable).
+            </div>
+          </div>
+
+          <div class="sens-right">
+            <div class="sens-card">
+              <div class="sens-card-title">Comparación de soluciones: base vs perturbada</div>
+              <table class="sens-tbl" id="sensTbl">
+                <thead>
+                  <tr>
+                    <th>PLANTA</th>
+                    <th>x BASE (T)</th>
+                    <th>x PERTURBADA (T)</th>
+                    <th>Δx (T)</th>
+                    <th>Δx (%)</th>
+                  </tr>
+                </thead>
+                <tbody id="sensTblBody">
+                  <tr>
+                    <td colspan="5" style="color:var(--fg3);padding:8px 6px">Ejecute el análisis</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="sens-card">
+              <div class="sens-card-title">Índice de estabilidad del sistema</div>
+              <div id="stabilitySection" style="font-family:var(--mono);font-size:9px;color:var(--fg3)">Sin datos</div>
+            </div>
+
+            <div class="chart-card">
+              <div class="chart-card-title">Variación de x ante cambios en b (±10%, ±20%, ±30%)</div>
+              <div class="chart-h220"><canvas id="chartSens"></canvas></div>
+            </div>
+
+            <div class="chart-card">
+              <div class="chart-card-title">Déficit por zona según nivel de demanda</div>
+              <div class="chart-h220"><canvas id="chartDeficit"></canvas></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-pane" id="tab-methods">
+        <div class="methods-layout" style="width:100%;height:100%">
+          <div class="methods-left" style="background:var(--ink2)">
+            <div class="methods-title">Comparar Métodos</div>
+            <div class="methods-sub">Todos los métodos resuelven el mismo sistema Ax=b. Se comparan iteraciones, error
+              residual y tiempo CPU.</div>
+            <div id="methodCards"></div>
+            <button class="btn-compare" onclick="runComparison()">⚙ COMPARAR TODOS</button>
+            <div
+              style="margin-top:10px;font-family:var(--mono);font-size:9px;color:var(--fg3);line-height:1.5;padding:8px;background:var(--ink3);border:1px solid var(--border);border-radius:var(--r)">
+              Usa el escenario activo del panel principal. Asegúrese de seleccionar un escenario primero.
+            </div>
+          </div>
+          <div class="methods-right">
+            <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px" id="cmpStatRow">
+              <div class="cmp-stat">
+                <div class="cmp-stat-lbl">Jacobi</div>
+                <div class="cmp-stat-val dim" id="cst0">—</div>
+              </div>
+              <div class="cmp-stat">
+                <div class="cmp-stat-lbl">Gauss-Seidel</div>
+                <div class="cmp-stat-val dim" id="cst1">—</div>
+              </div>
+              <div class="cmp-stat">
+                <div class="cmp-stat-lbl">SOR</div>
+                <div class="cmp-stat-val dim" id="cst2">—</div>
+              </div>
+              <div class="cmp-stat">
+                <div class="cmp-stat-lbl">LU</div>
+                <div class="cmp-stat-val dim" id="cst3">—</div>
+              </div>
+              <div class="cmp-stat">
+                <div class="cmp-stat-lbl">Grad. Conj.</div>
+                <div class="cmp-stat-val dim" id="cst4">—</div>
+              </div>
+            </div>
+            <div style="background:var(--ink3);border:1px solid var(--border);border-radius:var(--r);padding:12px">
+              <div style="font-family:var(--display);font-size:11px;font-weight:700;color:var(--fg);margin-bottom:8px">
+                Tabla comparativa completa</div>
+              <table class="cmp-tbl" id="cmpTbl">
+                <thead>
+                  <tr>
+                    <th>MÉTODO</th>
+                    <th>TIPO</th>
+                    <th>ITERACIONES</th>
+                    <th>ERROR ‖r‖</th>
+                    <th>TIEMPO (ms)</th>
+                    <th>x₁</th>
+                    <th>x₂</th>
+                    <th>x₃</th>
+                    <th>CONVERGIÓ</th>
+                  </tr>
+                </thead>
+                <tbody id="cmpTblBody">
+                  <tr>
+                    <td colspan="9" style="color:var(--fg3);padding:8px 6px;font-family:var(--mono);font-size:9px">
+                      Presione COMPARAR TODOS</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div style="background:var(--ink3);border:1px solid var(--border);border-radius:var(--r);padding:12px">
+              <div style="font-family:var(--display);font-size:11px;font-weight:700;color:var(--fg);margin-bottom:8px">
+                Convergencia: error vs iteración</div>
+              <div style="height:200px;position:relative"><canvas id="chartConv"></canvas></div>
+            </div>
+            <div style="background:var(--ink3);border:1px solid var(--border);border-radius:var(--r);padding:12px">
+              <div style="font-family:var(--display);font-size:11px;font-weight:700;color:var(--fg);margin-bottom:8px">
+                Interpretación académica</div>
+              <div id="methodInterpret" style="font-family:var(--mono);font-size:9px;color:var(--fg3);line-height:1.7">
+                Ejecute la comparación para ver el análisis.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    "use strict";
+    const PLANTS = [
+      { id: "P0", name: "Planta 1", abbr: "P1", x: 195, y: 155, cap: 180 },
+      { id: "P1", name: "Planta 2", abbr: "P2", x: 385, y: 235, cap: 200 },
+      { id: "P2", name: "Planta 3", abbr: "P3", x: 565, y: 195, cap: 160 },
+    ];
+    const ZONES = [
+      { id: "Z0", name: "Zona Norte", abbr: "NORTE", x: 155, y: 75 },
+      { id: "Z1", name: "Zona Central", abbr: "CENTRAL", x: 375, y: 110 },
+      { id: "Z2", name: "Zona Sur", abbr: "SUR", x: 345, y: 390 },
+    ];
+    const RDEFS = [[0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [1, 2], [2, 0], [2, 1], [2, 2]];
+
+    const SCENARIOS = [
+      {
+        id: "normal", name: "Operación Normal", tag: "ok", tagLabel: "NORMAL",
+        desc: "Red completa activa. Demanda estándar.",
+        A: [[0.60, 0.15, 0.10], [0.20, 0.65, 0.25], [0.10, 0.25, 0.60]],
+        b: [120, 150, 90],
+        costs: [[2.1, 3.5, 4.8], [2.8, 1.9, 3.2], [5.1, 3.8, 1.5]],
+        blocked: [], reduced: [],
+        steps: [
+          { title: "El problema", body: "Red operativa normal. <b>3 plantas</b> abastecen <b>3 zonas</b>. Demanda total: 360 T/día. Todas las rutas disponibles." },
+          { title: "Formulando Ax = b", body: "La matriz A codifica la fracción de cada planta hacia cada zona. El solver encuentra x (T/día por planta) tal que Ax = b." },
+          { title: "Solución óptima", body: "El sistema converge. Cada planta recibe su asignación óptima de despacho cubriendo la demanda zonal al mínimo costo posible." },
+        ]
+      },
+      {
+        id: "crisis", name: "Crisis Alimentaria", tag: "crit", tagLabel: "CRISIS",
+        desc: "Demanda +40% Zona Norte por fenómeno climático.",
+        A: [[0.70, 0.12, 0.10], [0.18, 0.68, 0.22], [0.08, 0.22, 0.65]],
+        b: [168, 150, 90],
+        costs: [[2.1, 3.5, 4.8], [2.8, 1.9, 3.2], [5.1, 3.8, 1.5]],
+        blocked: [], reduced: [0, 3],
+        steps: [
+          { title: "La crisis", body: "Fenómeno de La Niña. <b>Demanda Zona Norte: 120→168 T/día (+40%)</b>. Rutas P1→Norte y P2→Norte saturadas al 50%." },
+          { title: "Sistema bajo presión", body: "La matriz A concentra más coeficiente hacia el Norte. El vector b₁ aumenta. El solver detecta si la capacidad total alcanza." },
+          { title: "Redistribución de emergencia", body: "Se fuerza mayor despacho desde las tres plantas hacia el Norte. El déficit residual indica si se necesita abastecimiento externo." },
+        ]
+      },
+      {
+        id: "bloqueo", name: "Bloqueo de Rutas", tag: "warn", tagLabel: "BLOQUEO",
+        desc: "Protestas cortan P1→Sur y P2→Norte.",
+        A: [[0.68, 0.00, 0.12], [0.20, 0.65, 0.18], [0.00, 0.38, 0.62]],
+        b: [120, 150, 90],
+        costs: [[2.1, 3.5, 4.8], [2.8, 1.9, 3.2], [5.1, 3.8, 1.5]],
+        blocked: [2, 3], reduced: [],
+        steps: [
+          { title: "El bloqueo", body: "Conflicto social corta <b>P1→Sur</b> y <b>P2→Norte</b>. Coeficientes de esas rutas = 0 en matriz A. Sistema más restrictivo." },
+          { title: "Matriz singular?", body: "Ceros en la matriz pueden hacerla mal condicionada. El solver evalúa si existe solución factible con las rutas restantes." },
+          { title: "Rutas alternativas", body: "P3 absorbe el Sur. P1 concentra flujo en Norte+Central. Se cuantifica qué zona queda más afectada por el bloqueo." },
+        ]
+      },
+      {
+        id: "falla", name: "Falla Planta 3", tag: "warn", tagLabel: "FALLA",
+        desc: "Flota Planta 3 averiada. Capacidad al 50%.",
+        A: [[0.55, 0.25, 0.18], [0.18, 0.65, 0.22], [0.15, 0.32, 0.52]],
+        b: [120, 150, 90],
+        costs: [[2.1, 3.5, 4.8], [2.8, 1.9, 3.2], [5.1, 3.8, 1.5]],
+        blocked: [], reduced: [6, 7, 8],
+        steps: [
+          { title: "La falla mecánica", body: "Avería en flota P3 reduce su capacidad a <b>80 T/día (50%)</b>. Todas sus rutas operan al 50%. Se usará Factorización LU." },
+          { title: "LU: solución directa", body: "La factorización LU no es iterativa: descompone A = L·U y resuelve dos sistemas triangulares. Exacto en un solo paso." },
+          { title: "Absorción por P1 y P2", body: "Planta 1 y Planta 2 incrementan despacho para compensar. El costo total sube porque usan rutas más largas hacia el Sur." },
+        ]
+      },
+    ];
+
+    const N = 3;
+
+    function solveJacobi(A, b, tol = 1e-7, maxIt = 500) {
+      const x = new Array(N).fill(0);
+      const hist = [];
+      let conv = false, it = 0;
+      for (let k = 0; k < maxIt; k++) {
+        const xn = new Array(N);
+        for (let i = 0; i < N; i++) {
+          let s = 0; for (let j = 0; j < N; j++)if (j !== i) s += A[i][j] * x[j];
+          xn[i] = Math.abs(A[i][i]) < 1e-12 ? 0 : (b[i] - s) / A[i][i];
+        }
+        it++;
+        const err = Math.max(...xn.map((v, i) => Math.abs(v - x[i])));
+        hist.push(err);
+        for (let i = 0; i < N; i++)x[i] = xn[i];
+        if (err < tol) { conv = true; break }
+      }
+      return { x, it, conv, hist, method: "Jacobi" };
+    }
+
+    function solveGS(A, b, tol = 1e-7, maxIt = 500) {
+      const x = new Array(N).fill(0);
+      const hist = [];
+      let conv = false, it = 0;
+      for (let k = 0; k < maxIt; k++) {
+        const xo = [...x];
+        for (let i = 0; i < N; i++) {
+          let s = 0; for (let j = 0; j < N; j++)if (j !== i) s += A[i][j] * x[j];
+          x[i] = Math.abs(A[i][i]) < 1e-12 ? 0 : (b[i] - s) / A[i][i];
+        }
+        it++;
+        const err = Math.max(...x.map((v, i) => Math.abs(v - xo[i])));
+        hist.push(err);
+        if (err < tol) { conv = true; break }
+      }
+      return { x, it, conv, hist, method: "Gauss-Seidel" };
+    }
+
+    function solveSOR(A, b, omega = 1.25, tol = 1e-7, maxIt = 500) {
+      const x = new Array(N).fill(0);
+      const hist = [];
+      let conv = false, it = 0;
+      for (let k = 0; k < maxIt; k++) {
+        const xo = [...x];
+        for (let i = 0; i < N; i++) {
+          let s = 0; for (let j = 0; j < N; j++)if (j !== i) s += A[i][j] * x[j];
+          const xgs = Math.abs(A[i][i]) < 1e-12 ? 0 : (b[i] - s) / A[i][i];
+          x[i] = (1 - omega) * xo[i] + omega * xgs;
+        }
+        it++;
+        const err = Math.max(...x.map((v, i) => Math.abs(v - xo[i])));
+        hist.push(err);
+        if (err < tol) { conv = true; break }
+      }
+      return { x, it, conv, hist, method: `SOR(ω=${omega.toFixed(2)})` };
+    }
+
+    function solveLU(A, b) {
+      const Ac = A.map(r => [...r]), bc = [...b];
+      for (let k = 0; k < N; k++) {
+        let mx = Math.abs(Ac[k][k]), mi = k;
+        for (let i = k + 1; i < N; i++)if (Math.abs(Ac[i][k]) > mx) { mx = Math.abs(Ac[i][k]); mi = i }
+        [Ac[k], Ac[mi]] = [Ac[mi], Ac[k]];[bc[k], bc[mi]] = [bc[mi], bc[k]];
+        if (Math.abs(Ac[k][k]) < 1e-12) continue;
+        for (let i = k + 1; i < N; i++) {
+          const f = Ac[i][k] / Ac[k][k];
+          for (let j = k; j < N; j++)Ac[i][j] -= f * Ac[k][j];
+          bc[i] -= f * bc[k];
+        }
+      }
+      const x = new Array(N).fill(0);
+      for (let i = N - 1; i >= 0; i--) {
+        let s = bc[i]; for (let j = i + 1; j < N; j++)s -= Ac[i][j] * x[j];
+        x[i] = Math.abs(Ac[i][i]) < 1e-12 ? 0 : s / Ac[i][i];
+      }
+      const resid = residual(A, x, b);
+      return { x, it: 1, conv: true, hist: [resid], method: "LU (Directo)" };
+    }
+
+    function solveCG(A, b, tol = 1e-7, maxIt = 500) {
+      const AT = transpose(A);
+      const ATA = matMul(AT, A);
+      const ATb = matVec(AT, b);
+      let x = new Array(N).fill(0);
+      let r = ATb.map((v, i) => v - matVec(ATA, [...x])[i]);
+      let p = [...r];
+      const hist = [];
+      let conv = false, it = 0;
+      for (let k = 0; k < maxIt; k++) {
+        const Ap = matVec(ATA, p);
+        const rTr = dot(r, r);
+        if (rTr < 1e-20) { conv = true; break }
+        const alpha = rTr / dot(p, Ap);
+        x = x.map((v, i) => v + alpha * p[i]);
+        const rNew = r.map((v, i) => v - alpha * Ap[i]);
+        it++;
+        const err = Math.sqrt(dot(rNew, rNew));
+        hist.push(err);
+        if (err < tol) { conv = true; break }
+        const beta = dot(rNew, rNew) / rTr;
+        p = rNew.map((v, i) => v + beta * p[i]);
+        r = rNew;
+      }
+      return { x, it, conv, hist, method: "Gradiente Conjugado" };
+    }
+
+    function residual(A, x, b) {
+      let s = 0;
+      for (let i = 0; i < N; i++) { let ax = 0; for (let j = 0; j < N; j++)ax += A[i][j] * x[j]; s += (ax - b[i]) ** 2 }
+      return Math.sqrt(s);
+    }
+    function transpose(A) { return Array.from({ length: N }, (_, i) => Array.from({ length: N }, (_, j) => A[j][i])) }
+    function matMul(A, B) { return Array.from({ length: N }, (_, i) => Array.from({ length: N }, (_, j) => A[i].reduce((s, v, k) => s + v * B[k][j], 0))) }
+    function matVec(A, v) { return A.map(row => row.reduce((s, a, j) => s + a * v[j], 0)) }
+    function dot(a, b) { return a.reduce((s, v, i) => s + v * b[i], 0) }
+
+    function dispatch(method, A, b, omega) {
+      switch (method) {
+        case "jacobi": return solveJacobi(A, b);
+        case "sor": return solveSOR(A, b, omega);
+        case "lu": return solveLU(A, b);
+        case "cg": return solveCG(A, b);
+        default: return solveGS(A, b);
+      }
+    }
+
+    function buildMatrixUI(sc) {
+      const cl = document.getElementById("mxColLbls");
+      cl.innerHTML = `<span></span>${ZONES.map(z => `<span style="font-family:var(--mono);font-size:8px;color:var(--fg3);text-align:center">${z.abbr}</span>`).join("")}`;
+
+      const g = document.getElementById("mxGrid"); g.innerHTML = "";
+      for (let i = 0; i < N; i++) {
+        const lbl = document.createElement("div"); lbl.className = "mx-row-lbl"; lbl.textContent = PLANTS[i].abbr; g.appendChild(lbl);
+        for (let j = 0; j < N; j++) {
+          const inp = document.createElement("input"); inp.type = "number"; inp.className = "mxi";
+          inp.id = `mx_${i}_${j}`; inp.step = "0.01"; inp.min = "0"; inp.max = "1"; inp.value = sc.A[i][j].toFixed(2);
+          g.appendChild(inp);
+        }
+      }
+      sc.blocked.forEach(ri => { const [pi, zi] = RDEFS[ri]; const el = document.getElementById(`mx_${pi}_${zi}`); if (el) { el.value = "0.00"; el.classList.add("blocked") } });
+
+      const vb = document.getElementById("vecBRow"); vb.style.gridTemplateColumns = "48px 1fr 1fr 1fr"; vb.innerHTML = "";
+      const blbl = document.createElement("div"); blbl.className = "vec-b-lbl"; blbl.style.cssText = "grid-column:1;align-self:center;padding:0 3px"; blbl.textContent = "b (T)"; vb.appendChild(blbl);
+      for (let i = 0; i < N; i++) {
+        const inp = document.createElement("input"); inp.type = "number"; inp.className = "mxi";
+        inp.id = `vb_${i}`; inp.step = "1"; inp.min = "0"; inp.value = sc.b[i]; vb.appendChild(inp);
+      }
+
+      const cg = document.getElementById("costGrid"); cg.innerHTML = "";
+      for (let i = 0; i < N; i++) {
+        const lbl = document.createElement("div"); lbl.className = "mx-row-lbl"; lbl.textContent = PLANTS[i].abbr; cg.appendChild(lbl);
+        for (let j = 0; j < N; j++) {
+          const inp = document.createElement("input"); inp.type = "number"; inp.className = "mxi cost-field";
+          inp.id = `cx_${i}_${j}`; inp.step = "0.1"; inp.min = "0"; inp.value = sc.costs[i][j].toFixed(1);
+          cg.appendChild(inp);
+        }
+      }
+    }
+
+    function readMatrix() {
+      const A = [], b = [], costs = [];
+      for (let i = 0; i < N; i++) {
+        const ar = [], cr = [];
+        for (let j = 0; j < N; j++) { ar.push(parseFloat(document.getElementById(`mx_${i}_${j}`)?.value) || 0); cr.push(parseFloat(document.getElementById(`cx_${i}_${j}`)?.value) || 0) }
+        A.push(ar); costs.push(cr);
+        b.push(parseFloat(document.getElementById(`vb_${i}`)?.value) || 0);
+      }
+      return { A, b, costs };
+    }
+
+    function computeRouteFlows(x, blocked, reduced) {
+      return RDEFS.map(([pi, zi], ri) => {
+        if (blocked.includes(ri)) return 0;
+        const activeForPlant = RDEFS.filter(([p], r) => p === pi && !blocked.includes(r)).length || 1;
+        let f = Math.max(0, x[pi]) / activeForPlant;
+        if (reduced.includes(ri)) f *= 0.5;
+        return f;
+      });
+    }
+
+    let _ptTimers = [];
+    function clearParticles() { _ptTimers.forEach(clearInterval); _ptTimers = []; document.getElementById("particleG").innerHTML = "" }
+
+    function pathD(x1, y1, x2, y2) {
+      const mx = (x1 + x2) / 2, my = (y1 + y2) / 2, dx = x2 - x1, dy = y2 - y1;
+      return `M${x1},${y1} Q${mx + dy * .22},${my - dx * .22} ${x2},${y2}`;
+    }
+
+    function spawnParticles(pathEl, color, flow) {
+      const pG = document.getElementById("particleG");
+      const len = pathEl.getTotalLength();
+      const n = Math.max(1, Math.min(5, Math.round(flow / 20)));
+      const speed = 90;
+      for (let p = 0; p < n; p++) {
+        let prog = (p / n) * len;
+        const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        c.setAttribute("r", "3"); c.setAttribute("fill", color); c.setAttribute("opacity", "0.85"); c.setAttribute("filter", "url(#glow)");
+        pG.appendChild(c);
+        const pt = pathEl.getPointAtLength(prog); c.setAttribute("cx", pt.x); c.setAttribute("cy", pt.y);
+        const t = setInterval(() => {
+          prog += speed * (16 / 1000); if (prog > len) prog = 0;
+          const p2 = pathEl.getPointAtLength(prog); c.setAttribute("cx", p2.x); c.setAttribute("cy", p2.y);
+        }, 16);
+        _ptTimers.push(t);
+      }
+    }
+
+    function drawMap(routeFlows, blocked, reduced, solved) {
+      clearParticles();
+      const rG = document.getElementById("routeG"), nG = document.getElementById("nodeG"), lG = document.getElementById("labelG");
+      rG.innerHTML = ""; nG.innerHTML = ""; lG.innerHTML = "";
+
+      RDEFS.forEach(([pi, zi], ri) => {
+        const pl = PLANTS[pi], zn = ZONES[zi];
+        const isB = blocked.includes(ri), isR = reduced.includes(ri) && !isB;
+        const col = isB ? "#e05260" : isR ? "#f0a500" : "#00d4a8";
+        const mk = isB ? "url(#arr-r)" : isR ? "url(#arr-a)" : "url(#arr-t)";
+        const flow = routeFlows[ri] || 0;
+        const sw = solved && !isB ? Math.max(1.2, Math.min(4.5, flow / 15)) : 1.5;
+
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        path.setAttribute("d", pathD(pl.x, pl.y, zn.x, zn.y));
+        path.setAttribute("fill", "none"); path.setAttribute("stroke", col);
+        path.setAttribute("stroke-width", sw); path.setAttribute("stroke-opacity", isB ? 0.22 : 1);
+        path.setAttribute("marker-end", mk);
+        if (isB) path.setAttribute("stroke-dasharray", "5,4");
+        rG.appendChild(path);
+
+        if (solved && !isB && flow > 2) {
+          const mx = (pl.x + zn.x) / 2 + (zn.y - pl.y) * .22, my = (pl.y + zn.y) / 2 - (zn.x - pl.x) * .22;
+          const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          t.setAttribute("x", mx); t.setAttribute("y", my - 4);
+          t.setAttribute("fill", col); t.setAttribute("font-size", "8.5");
+          t.setAttribute("font-family", "DM Mono,monospace"); t.setAttribute("text-anchor", "middle"); t.setAttribute("opacity", "0.9");
+          t.textContent = `${flow.toFixed(0)}T`; lG.appendChild(t);
+          spawnParticles(path, col, flow);
+        }
+      });
+
+      PLANTS.forEach((p, pi) => {
+        const g = document.createElementNS("http://www.w3.org/2000/svg", "g"); g.style.cursor = "pointer";
+        const bg = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        bg.setAttribute("cx", p.x); bg.setAttribute("cy", p.y); bg.setAttribute("r", "19");
+        bg.setAttribute("fill", "rgba(0,212,168,.12)"); bg.setAttribute("stroke", "#00d4a8"); bg.setAttribute("stroke-width", "2");
+        g.appendChild(bg);
+        const ico = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        ico.setAttribute("x", p.x); ico.setAttribute("y", p.y + 5); ico.setAttribute("fill", "#00d4a8"); ico.setAttribute("font-size", "13"); ico.setAttribute("text-anchor", "middle"); ico.textContent = "🏭"; g.appendChild(ico);
+        const lbl = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        lbl.setAttribute("x", p.x); lbl.setAttribute("y", p.y + 32); lbl.setAttribute("fill", "#d8e8f8"); lbl.setAttribute("font-size", "9"); lbl.setAttribute("font-family", "Syne,sans-serif"); lbl.setAttribute("font-weight", "700"); lbl.setAttribute("text-anchor", "middle"); lbl.textContent = p.abbr; lG.appendChild(lbl);
+        g.addEventListener("mouseenter", e => showTip(e, "plant", pi)); g.addEventListener("mouseleave", hideTip);
+        nG.appendChild(g);
+      });
+
+      ZONES.forEach((z, zi) => {
+        const g = document.createElementNS("http://www.w3.org/2000/svg", "g"); g.style.cursor = "pointer";
+        const bg = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        bg.setAttribute("cx", z.x); bg.setAttribute("cy", z.y); bg.setAttribute("r", "16");
+        bg.setAttribute("fill", "rgba(77,157,224,.14)"); bg.setAttribute("stroke", "#4d9de0"); bg.setAttribute("stroke-width", "2");
+        g.appendChild(bg);
+        const ico = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        ico.setAttribute("x", z.x); ico.setAttribute("y", z.y + 5); ico.setAttribute("fill", "#4d9de0"); ico.setAttribute("font-size", "11"); ico.setAttribute("text-anchor", "middle"); ico.textContent = "🏘"; g.appendChild(ico);
+        const lbl = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        lbl.setAttribute("x", z.x); lbl.setAttribute("y", z.y + 28); lbl.setAttribute("fill", "#d8e8f8"); lbl.setAttribute("font-size", "8.5"); lbl.setAttribute("font-family", "Syne,sans-serif"); lbl.setAttribute("font-weight", "700"); lbl.setAttribute("text-anchor", "middle"); lbl.textContent = z.abbr; lG.appendChild(lbl);
+        g.addEventListener("mouseenter", e => showTip(e, "zone", zi)); g.addEventListener("mouseleave", hideTip);
+        nG.appendChild(g);
+      });
+    }
+
+    let _lastResult = null, _activeSc = null;
+    function showTip(e, type, idx) {
+      const tip = document.getElementById("tip");
+      const rect = document.getElementById("mainSVG").getBoundingClientRect();
+      tip.style.left = (e.clientX - rect.left + 14) + "px"; tip.style.top = (e.clientY - rect.top - 14) + "px";
+      if (type === "plant") {
+        const p = PLANTS[idx]; const flow = _lastResult ? (Math.max(0, _lastResult.x[idx]) || 0).toFixed(1) : "—";
+        const util = _lastResult ? ((Math.max(0, _lastResult.x[idx]) || 0) / p.cap * 100).toFixed(0) + "%" : "—";
+        tip.innerHTML = `<div class="tip-name">🏭 ${p.name}</div>
+      <div class="tip-row"><span>Capacidad</span><span class="tip-v">${p.cap} T/día</span></div>
+      <div class="tip-row"><span>Asignado</span><span class="tip-v">${flow} T</span></div>
+      <div class="tip-row"><span>Utilización</span><span class="tip-v">${util}</span></div>`;
+      } else {
+        const z = ZONES[idx]; const dem = _activeSc ? _activeSc.b[idx] : "—";
+        tip.innerHTML = `<div class="tip-name">🏘 ${z.name}</div><div class="tip-row"><span>Demanda</span><span class="tip-v">${dem} T/día</span></div>`;
+      }
+      tip.classList.add("show");
+    }
+    function hideTip() { document.getElementById("tip").classList.remove("show") }
+
+    function setStep(n, sc) {
+      [1, 2, 3].forEach(i => {
+        const el = document.getElementById(`sd${i}`);
+        el.className = "step-dot" + (i < n ? " done" : i === n ? " active" : "");
+      });
+      const s = sc.steps[n - 1];
+      document.getElementById("stepContent").innerHTML = `<div class="step-title">${s.title}</div><div class="step-body">${s.body}</div>`;
+    }
+
+    let _barChart = null;
+
+    function renderRight(sc, result, routeFlows, costsMatrix) {
+      const fb = document.getElementById("flowBody"); fb.innerHTML = "";
+      RDEFS.forEach(([pi, zi], ri) => {
+        const isB = sc.blocked.includes(ri), isR = sc.reduced.includes(ri);
+        const flow = routeFlows[ri] || 0;
+        const cost = costsMatrix[pi][zi];
+        const routeCost = flow * cost;
+        const tr = document.createElement("tr"); if (isB) tr.className = "brow";
+        const badge = isB ? `<span class="fbadge fb-b">BLOQ.</span>` : isR ? `<span class="fbadge fb-w">50%</span>` : `<span class="fbadge fb-ok">ACT.</span>`;
+        const vc = isB ? "vr" : isR ? "va" : "vt";
+        tr.innerHTML = `<td>${PLANTS[pi].abbr}→${ZONES[zi].abbr}</td><td>${badge}</td><td class="r ${vc}">${isB ? "—" : flow.toFixed(1)}</td><td class="r" style="color:var(--amber)">${isB ? "—" : "$" + routeCost.toFixed(0)}</td>`;
+        fb.appendChild(tr);
+      });
+
+      const zs = document.getElementById("zoneSection"); zs.innerHTML = "";
+      const zt = ZONES.map((_, zi) => {
+        const served = RDEFS.reduce((a, [pi, zii], ri) => zii === zi && !sc.blocked.includes(ri) ? a + (routeFlows[ri] || 0) : a, 0);
+        return { served, demand: sc.b[zi] };
+      });
+      ZONES.forEach((z, zi) => {
+        const { served, demand } = zt[zi];
+        const pct = Math.min(100, demand > 0 ? served / demand * 100 : 0);
+        const col = pct >= 95 ? "var(--teal)" : pct >= 70 ? "var(--amber)" : "var(--red)";
+        const row = document.createElement("div"); row.className = "zbar-row";
+        row.innerHTML = `<div class="zbar-head"><span class="zbar-name">${z.name}</span><span class="zbar-val" style="color:${col}">${served.toFixed(0)}/${demand}T (${pct.toFixed(0)}%)</span></div><div class="zbar-track"><div class="zbar-fill" style="width:0%;background:${col}" data-w="${pct}"></div></div>`;
+        zs.appendChild(row);
+      });
+      setTimeout(() => document.querySelectorAll(".zbar-fill").forEach(el => el.style.width = el.dataset.w + "%"), 80);
+
+      const totalCost = RDEFS.reduce((a, [pi, zi], ri) => a + (sc.blocked.includes(ri) ? 0 : (routeFlows[ri] || 0) * costsMatrix[pi][zi]), 0);
+      const cbw = document.getElementById("costBoxWrap");
+      cbw.innerHTML = `<div class="cost-box">
+    <div class="cost-title">💰 Costo de Transporte</div>
+    ${RDEFS.filter(([pi, zi], ri) => !sc.blocked.includes(ri)).map(([pi, zi], ri) => {
+        const realRi = RDEFS.findIndex(([p, z]) => p === pi && z === zi);
+        const flow = routeFlows[realRi] || 0;
+        return `<div class="cost-row"><span>${PLANTS[pi].abbr}→${ZONES[zi].abbr} (${costsMatrix[pi][zi].toFixed(1)} $/T)</span><span class="cost-val">$${(flow * costsMatrix[pi][zi]).toFixed(0)}</span></div>`;
+      }).join("")}
+    <div class="cost-total"><span class="cost-total-lbl">TOTAL DIARIO</span><span class="cost-total-val">$${totalCost.toFixed(0)}/día</span></div>
+  </div>`;
+
+      const totalFlow = result.x.reduce((a, b) => a + Math.max(0, b), 0);
+      const totalDem = sc.b.reduce((a, b) => a + b, 0);
+      const deficit = Math.max(0, totalDem - totalFlow);
+      const zonesOk = zt.filter(z => z.served >= z.demand * 0.95).length;
+      function setKPI(id, val, cls) { const e = document.getElementById(id); e.textContent = val; e.className = "kpi-val " + cls }
+      setKPI("kFlux", totalFlow.toFixed(0), totalFlow >= totalDem * 0.95 ? "ok" : totalFlow >= totalDem * 0.7 ? "warn" : "bad");
+      setKPI("kCost", "$" + totalCost.toFixed(0), "warn");
+      setKPI("kDef", deficit.toFixed(0), deficit < 5 ? "ok" : deficit < 30 ? "warn" : "bad");
+      setKPI("kZones", zonesOk + "/3", zonesOk === 3 ? "ok" : zonesOk >= 2 ? "warn" : "bad");
+
+      const aw = document.getElementById("alertsWrap"); aw.innerHTML = "";
+      function addAlert(c, type, tag, msg) { const d = document.createElement("div"); d.className = `alert ${type}`; d.innerHTML = `<span class="alert-tag">${tag}</span>${msg}`; c.appendChild(d) }
+      const resid = residual(readMatrix().A, result.x, readMatrix().b);
+      addAlert(aw, result.conv ? "ok" : "warn", result.conv ? "CONVERGIÓ" : "PARCIAL", `Método: ${result.method}. Iteraciones: ${result.it}. ‖r‖ = ${resid.toExponential(3)}.`);
+      zt.forEach((z, zi) => {
+        const pct = z.demand > 0 ? z.served / z.demand * 100 : 100;
+        if (pct < 70) addAlert(aw, "crit", "DÉFICIT CRÍTICO", `${ZONES[zi].name}: ${pct.toFixed(0)}% cubierta. ${(z.demand - z.served).toFixed(0)}T de déficit/día.`);
+        else if (pct < 95) addAlert(aw, "warn", "DÉFICIT LEVE", `${ZONES[zi].name}: ${pct.toFixed(0)}% cubierta.`);
+      });
+      if (sc.blocked.length > 0) addAlert(aw, "warn", "RUTAS BLOQUEADAS", `${sc.blocked.length} ruta(s) cortadas.`);
+      if (totalCost > 5000) addAlert(aw, "info", "ALTO COSTO", `Costo total $${totalCost.toFixed(0)}/día.`);
+
+      const { A } = readMatrix(); let dd = true;
+      for (let i = 0; i < N; i++) { const diag = Math.abs(A[i][i]); const off = A[i].reduce((s, v, j) => j !== i ? s + Math.abs(v) : s, 0); if (diag <= off) dd = false }
+      addAlert(aw, dd ? "ok" : "warn", dd ? "SISTEMA ESTABLE" : "ESTABILIDAD REDUCIDA", dd ? "La matriz A es diagonal dominante. Convergencia garantizada para métodos iterativos." : "A no es diagonal dominante. Los métodos iterativos pueden divergir.");
+    }
+
+    const METHODS = [{ id: "gauss_seidel", label: "Gauss-Seidel" }, { id: "jacobi", label: "Jacobi" }, { id: "sor", label: "SOR" }, { id: "lu", label: "LU" }, { id: "cg", label: "Grad. Conj." }];
+    let _selectedMethod = "gauss_seidel";
+
+    function buildMethodGrid() {
+      const g = document.getElementById("methodGrid"); g.innerHTML = "";
+      METHODS.forEach(m => {
+        const btn = document.createElement("button"); btn.className = "mth-btn" + (m.id === _selectedMethod ? " active" : "");
+        btn.textContent = m.label; btn.onclick = () => { _selectedMethod = m.id; buildMethodGrid(); document.getElementById("sorWrap").style.display = m.id === "sor" ? "flex" : "none" };
+        g.appendChild(btn);
+      });
+    }
+
+    function buildScenarioList() {
+      const list = document.getElementById("scList"); list.innerHTML = "";
+      SCENARIOS.forEach(sc => {
+        const btn = document.createElement("div"); btn.className = "sc-card"; btn.id = "sc_" + sc.id;
+        const tagCls = { ok: "tag-ok", warn: "tag-warn", crit: "tag-crit" }[sc.tag];
+        btn.innerHTML = `<div class="sc-name">${sc.name}</div><div class="sc-desc">${sc.desc}</div><div class="sc-tags"><span class="tag ${tagCls}">${sc.tagLabel}</span></div>`;
+        btn.onclick = () => selectScenario(sc); list.appendChild(btn);
+      });
+    }
+
+    function buildMethodDescCards() {
+      const c = document.getElementById("methodCards"); c.innerHTML = "";
+      const descs = {
+        "Jacobi": "Actualiza todas las incógnitas simultáneamente usando valores del paso anterior. Converge si A es estrictamente diagonal dominante.",
+        "Gauss-Seidel": "Actualiza cada incógnita usando los valores ya actualizados del mismo paso. Converge ~2× más rápido que Jacobi.",
+        "SOR": "Gauss-Seidel con factor de relajación ω. ω∈(1,2) acelera convergencia. Óptimo para problemas mal condicionados.",
+        "LU (Directo)": "Factorización A=L·U con pivoteo parcial. Solución exacta en O(n³). No iterativo. Ideal para sistemas pequeños estables.",
+        "Gradiente Conjugado": "Método de proyección ortogonal. Opera sobre A^TA para sistemas no simétricos. Converge en ≤n pasos teóricos.",
+      };
+      Object.entries(descs).forEach(([name, body]) => {
+        const d = document.createElement("div"); d.className = "method-desc-card";
+        d.innerHTML = `<div class="method-desc-name">${name}</div><div class="method-desc-body">${body}</div>`;
+        c.appendChild(d);
+      });
+    }
+
+    function selectScenario(sc) {
+      _activeSc = sc; _lastResult = null;
+      document.querySelectorAll(".sc-card").forEach(c => c.classList.remove("active"));
+      document.getElementById("sc_" + sc.id).classList.add("active");
+      buildMatrixUI(sc);
+      drawMap(RDEFS.map(() => 0), sc.blocked, sc.reduced, false);
+      document.getElementById("mapTitle").textContent = sc.name;
+      document.getElementById("mapSub").textContent = "Presione CALCULAR DISTRIBUCIÓN";
+      setStep(1, sc);
+      document.getElementById("flowBody").innerHTML = `<tr><td colspan="4" style="color:var(--fg3);font-size:9px;padding:7px 5px">Sin resolver — presione CALCULAR</td></tr>`;
+      document.getElementById("zoneSection").innerHTML = `<div style="font-family:var(--mono);font-size:9px;color:var(--fg3);padding:5px">Sin datos</div>`;
+      document.getElementById("costBoxWrap").innerHTML = "";
+      document.getElementById("alertsWrap").innerHTML = `<div class="alert info"><span class="alert-tag">ESCENARIO CARGADO</span>Configure parámetros y presione CALCULAR.</div>`;
+      ["kFlux", "kCost", "kDef", "kZones"].forEach(id => { const e = document.getElementById(id); e.textContent = "—"; e.className = "kpi-val dim" });
+      document.getElementById("sensScenarioName").textContent = sc.name;
+    }
+
+    function handleSolve() {
+      if (!_activeSc) { alert("Seleccione un escenario."); return }
+      const sc = _activeSc;
+      const { A, b, costs } = readMatrix();
+      const omega = parseFloat(document.getElementById("sorOmega").value) || 1.25;
+      const overlay = document.getElementById("solvingOverlay");
+      const msgs = ["FORMULANDO Ax = b...", "EJECUTANDO SOLVER...", "CALCULANDO FLUJOS...", "VERIFICANDO CONVERGENCIA...", "ASIGNANDO DISTRIBUCIÓN..."];
+      let mi = 0; overlay.classList.add("show"); document.getElementById("btnSolve").disabled = true;
+      document.getElementById("solvingMsg").textContent = msgs[0]; setStep(2, sc);
+      const iv = setInterval(() => { mi = (mi + 1) % msgs.length; document.getElementById("solvingMsg").textContent = msgs[mi] }, 380);
+
+      setTimeout(() => {
+        clearInterval(iv);
+        const t0 = performance.now();
+        const result = dispatch(_selectedMethod, A, b, omega);
+        result.time = (performance.now() - t0).toFixed(2);
+        _lastResult = result;
+
+        const routeFlows = computeRouteFlows(result.x, sc.blocked, sc.reduced);
+        drawMap(routeFlows, sc.blocked, sc.reduced, true);
+        renderRight(sc, result, routeFlows, costs);
+
+        overlay.classList.remove("show"); document.getElementById("btnSolve").disabled = false;
+        document.getElementById("mapSub").textContent = `Resuelta — ${result.method} — ${result.it} iter. — ${result.time}ms`;
+        setStep(3, sc);
+      }, 1800);
+    }
+
+    let _chartSens = null, _chartDeficit = null;
+
+    [0, 1, 2].forEach(i => {
+      document.getElementById(`ss${i}`).addEventListener("input", function () {
+        document.getElementById(`sp${i}`).textContent = (this.value >= 0 ? "+" : "") + this.value + "%";
+      });
+    });
+    document.getElementById("sorOmega").addEventListener("input", function () { document.getElementById("sorVal").textContent = parseFloat(this.value).toFixed(2) });
+
+    function runSensitivity() {
+      if (!_activeSc) { alert("Seleccione un escenario primero."); return }
+      const sc = _activeSc;
+      const { A, b: bBase } = readMatrix();
+      const deltas = [0, 1, 2].map(i => parseFloat(document.getElementById(`ss${i}`).value) / 100);
+      const bPerturbed = bBase.map((v, i) => v * (1 + deltas[i]));
+
+      const rBase = solveGS(A, bBase);
+      const rPert = solveGS(A, bPerturbed);
+
+      const tbody = document.getElementById("sensTblBody"); tbody.innerHTML = "";
+      PLANTS.forEach((p, i) => {
+        const xb = Math.max(0, rBase.x[i] || 0);
+        const xp = Math.max(0, rPert.x[i] || 0);
+        const dx = xp - xb;
+        const dxPct = xb > 0 ? (dx / xb * 100) : 0;
+        const cls = Math.abs(dxPct) < 1 ? "neu" : dxPct > 0 ? "pos" : "neg";
+        const badge = Math.abs(dxPct) < 1 ? `<span class="delta-badge delta-neu">0%</span>` : dxPct > 0 ? `<span class="delta-badge delta-pos">+${dxPct.toFixed(1)}%</span>` : `<span class="delta-badge delta-neg">${dxPct.toFixed(1)}%</span>`;
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${p.name}</td><td class="${cls}">${xb.toFixed(2)}</td><td class="${cls}">${xp.toFixed(2)}</td><td class="${cls}">${dx >= 0 ? "+" : ""}${dx.toFixed(2)}</td><td>${badge}</td>`;
+        tbody.appendChild(tr);
+      });
+
+      const dxVec = rPert.x.map((v, i) => v - rBase.x[i]);
+      const dbVec = bPerturbed.map((v, i) => v - bBase[i]);
+      const normDx = Math.sqrt(dxVec.reduce((a, v) => a + v * v, 0));
+      const normDb = Math.sqrt(dbVec.reduce((a, v) => a + v * v, 0));
+      const si = normDb > 1e-9 ? normDx / normDb : 0;
+      const siColor = si < 0.5 ? "var(--teal)" : si < 1 ? "var(--amber)" : "var(--red)";
+      const siLabel = si < 0.5 ? "ESTABLE" : si < 1 ? "MODERADO" : "SENSIBLE";
+      const siPct = Math.min(100, si * 50);
+      document.getElementById("stabilitySection").innerHTML = `
+    <div style="font-family:var(--mono);font-size:9px;color:var(--fg3);margin-bottom:6px">Índice de sensibilidad: ||Δx||/||Δb|| = <b style="color:${siColor}">${si.toFixed(4)}</b></div>
+    <div class="stability-meter">
+      <div class="stability-bar-track"><div class="stability-bar-fill" style="width:0%;background:${siColor}" data-w="${siPct}"></div></div>
+      <span class="stability-label" style="color:${siColor}">${siLabel}</span>
+    </div>
+    <div style="font-family:var(--mono);font-size:9px;color:var(--fg3);margin-top:6px">
+      ${si < 0.5 ? "El sistema amortigua las perturbaciones. Pequeños cambios en la demanda producen cambios menores en la solución." : si < 1 ? "Sensibilidad moderada. El sistema responde proporcionalmente a cambios en la demanda." : "⚠ El sistema amplifica perturbaciones. Cambios pequeños en b producen cambios grandes en x."}
+    </div>`;
+      setTimeout(() => document.querySelectorAll(".stability-bar-fill").forEach(el => el.style.width = el.dataset.w + "%"), 80);
+
+      const levels = [-30, -20, -10, 0, 10, 20, 30];
+      const xSweep = PLANTS.map(() => []);
+      levels.forEach(pct => {
+        const bSw = bBase.map(v => v * (1 + pct / 100));
+        const r = solveGS(A, bSw);
+        PLANTS.forEach((_, i) => xSweep[i].push(Math.max(0, r.x[i] || 0)));
+      });
+
+      if (_chartSens) _chartSens.destroy();
+      const ctx = document.getElementById("chartSens").getContext("2d");
+      _chartSens = new Chart(ctx, {
+        type: "line", data: {
+          labels: levels.map(v => v + "%"),
+          datasets: PLANTS.map((p, i) => ({ label: p.abbr, data: xSweep[i], borderColor: ["#00d4a8", "#4d9de0", "#a78bfa"][i], backgroundColor: "transparent", borderWidth: 2, pointRadius: 3, tension: .3 }))
+        }, options: {
+          responsive: true, maintainAspectRatio: false, animation: { duration: 600 },
+          scales: {
+            x: { ticks: { color: "#3d5268", font: { family: "DM Mono", size: 9 } }, grid: { color: "rgba(30,45,61,.5)" }, title: { display: true, text: "Variación de demanda (%)", color: "#3d5268", font: { family: "DM Mono", size: 9 } } },
+            y: { ticks: { color: "#3d5268", font: { family: "DM Mono", size: 9 } }, grid: { color: "rgba(30,45,61,.5)" }, title: { display: true, text: "x (T/día)", color: "#3d5268", font: { family: "DM Mono", size: 9 } } }
+          },
+          plugins: { legend: { labels: { color: "#7a93aa", font: { family: "DM Mono", size: 9 }, boxWidth: 10 } }, tooltip: { backgroundColor: "#111c2a", borderColor: "#1e2d3d", borderWidth: 1, titleColor: "#00d4a8", bodyColor: "#7a93aa" } }
+        }
+      });
+
+      const defData = ZONES.map((_, zi) => levels.map(pct => {
+        const bSw = bBase.map(v => v * (1 + pct / 100));
+        const r = solveGS(A, bSw);
+        const served = RDEFS.reduce((a, [pi, zii], ri) => zii === zi ? a + Math.max(0, r.x[pi] / RDEFS.filter(([p]) => p === pi).length) : a, 0);
+        return Math.max(0, bSw[zi] - served);
+      }));
+
+      if (_chartDeficit) _chartDeficit.destroy();
+      const ctx2 = document.getElementById("chartDeficit").getContext("2d");
+      _chartDeficit = new Chart(ctx2, {
+        type: "bar", data: {
+          labels: levels.map(v => v + "%"),
+          datasets: ZONES.map((z, i) => ({ label: z.abbr, data: defData[i], backgroundColor: ["rgba(0,212,168,.4)", "rgba(77,157,224,.4)", "rgba(167,139,250,.4)"][i], borderColor: ["#00d4a8", "#4d9de0", "#a78bfa"][i], borderWidth: 1 }))
+        }, options: {
+          responsive: true, maintainAspectRatio: false, animation: { duration: 600 },
+          scales: {
+            x: { ticks: { color: "#3d5268", font: { family: "DM Mono", size: 9 } }, grid: { color: "rgba(30,45,61,.5)" } },
+            y: { ticks: { color: "#3d5268", font: { family: "DM Mono", size: 9 } }, grid: { color: "rgba(30,45,61,.5)" }, beginAtZero: true, title: { display: true, text: "Déficit (T/día)", color: "#3d5268", font: { family: "DM Mono", size: 9 } } }
+          },
+          plugins: { legend: { labels: { color: "#7a93aa", font: { family: "DM Mono", size: 9 }, boxWidth: 10 } }, tooltip: { backgroundColor: "#111c2a", borderColor: "#1e2d3d", borderWidth: 1, titleColor: "#00d4a8", bodyColor: "#7a93aa" } }
+        }
+      });
+    }
+
+    let _chartConv = null;
+
+    function runComparison() {
+      if (!_activeSc) { alert("Seleccione un escenario en la pestaña principal primero."); return }
+      const { A, b } = readMatrix();
+      const omega = parseFloat(document.getElementById("sorOmega").value) || 1.25;
+      const allMethods = [
+        () => solveJacobi(A, b),
+        () => solveGS(A, b),
+        () => solveSOR(A, b, omega),
+        () => solveLU(A, b),
+        () => solveCG(A, b),
+      ];
+      const names = ["Jacobi", "Gauss-Seidel", `SOR(ω=${omega.toFixed(2)})`, "LU (Directo)", "Grad. Conj."];
+      const types = ["Iterativo", "Iterativo", "Iterativo", "Directo", "Krylov"];
+      const colors = ["#00d4a8", "#4d9de0", "#f0a500", "#a78bfa", "#e05260"];
+
+      const results = allMethods.map((fn, i) => { const t0 = performance.now(); const r = fn(); r.time = (performance.now() - t0).toFixed(3); r.label = names[i]; r.type = types[i]; r.color = colors[i]; r.resid = residual(A, r.x, b); return r });
+
+      results.forEach((r, i) => { const e = document.getElementById("cst" + i); e.textContent = r.method === "LU (Directo)" ? "1 (directo)" : r.it; e.className = "cmp-stat-val " + (r.conv ? "ok" : "bad") });
+
+      const iterative = results.filter(r => r.type !== "Directo");
+      const best = iterative.length ? iterative.reduce((b, r) => r.it < b.it ? r : b) : results[0];
+
+      const tbody = document.getElementById("cmpTblBody"); tbody.innerHTML = "";
+      results.forEach(r => {
+        const isBest = r === best;
+        const tr = document.createElement("tr"); if (isBest) tr.className = "best-row";
+        tr.innerHTML = `<td class="${isBest ? "winner" : ""}">${isBest ? "★ " : ""}${r.label}</td>
+      <td>${r.type}</td>
+      <td class="${isBest ? "winner" : ""}">${r.type === "Directo" ? "Directo" : r.it}</td>
+      <td>${r.resid.toExponential(3)}</td>
+      <td>${r.time} ms</td>
+      <td>${r.x[0].toFixed(3)}</td><td>${r.x[1].toFixed(3)}</td><td>${r.x[2].toFixed(3)}</td>
+      <td style="color:${r.conv ? "var(--teal)" : "var(--red)"}">${r.conv ? "✓ Sí" : "✗ No"}</td>`;
+        tbody.appendChild(tr);
+      });
+
+      if (_chartConv) _chartConv.destroy();
+      const ctx = document.getElementById("chartConv").getContext("2d");
+      const iterResults = results.filter(r => r.hist && r.hist.length > 1);
+      _chartConv = new Chart(ctx, {
+        type: "line", data: {
+          datasets: iterResults.map(r => ({ label: r.label, data: r.hist.map((v, i) => ({ x: i + 1, y: Math.max(v, 1e-12) })), borderColor: r.color, backgroundColor: "transparent", borderWidth: 1.5, pointRadius: 0, tension: .1 }))
+        }, options: {
+          responsive: true, maintainAspectRatio: false, animation: { duration: 500 },
+          scales: {
+            x: { type: "linear", title: { display: true, text: "Iteración", color: "#3d5268", font: { family: "DM Mono", size: 9 } }, ticks: { color: "#3d5268", font: { family: "DM Mono", size: 9 } }, grid: { color: "rgba(30,45,61,.5)" } },
+            y: { type: "logarithmic", title: { display: true, text: "Error (log)", color: "#3d5268", font: { family: "DM Mono", size: 9 } }, ticks: { color: "#3d5268", font: { family: "DM Mono", size: 9 } }, grid: { color: "rgba(30,45,61,.5)" } }
+          },
+          plugins: { legend: { labels: { color: "#7a93aa", font: { family: "DM Mono", size: 9 }, boxWidth: 10 } }, tooltip: { backgroundColor: "#111c2a", borderColor: "#1e2d3d", borderWidth: 1, titleColor: "#00d4a8", bodyColor: "#7a93aa" } }
+        }
+      });
+
+      const inter = document.getElementById("methodInterpret");
+      const convMethods = results.filter(r => r.conv);
+      const fastIter = iterative.filter(r => r.conv).sort((a, b) => a.it - b.it);
+      inter.innerHTML = `
+    <b style="color:var(--teal)">[CONVERGENCIA]</b> ${convMethods.length}/${results.length} métodos convergieron al sistema.<br><br>
+    ${fastIter.length > 1 ? `<b style="color:var(--amber)">[VELOCIDAD]</b> ${fastIter[0].label} convergió en <b style="color:var(--teal)">${fastIter[0].it} iteraciones</b>, mientras que ${fastIter[fastIter.length - 1].label} necesitó ${fastIter[fastIter.length - 1].it}. Gauss-Seidel típicamente supera a Jacobi por usar valores actualizados inmediatamente.<br><br>` : ""}
+    <b style="color:var(--amber)">[LU vs ITERATIVOS]</b> La factorización LU ofrece solución exacta en un solo paso (costo O(n³)), mientras los métodos iterativos son más eficientes para sistemas grandes dispersos.<br><br>
+    <b style="color:var(--amber)">[SOR]</b> Con ω=${omega.toFixed(2)}: ${results.find(r => r.label.startsWith("SOR"))?.conv ? "acelera la convergencia respecto a Gauss-Seidel básico." : "diverge con este ω. Pruebe valores cercanos a 1.0-1.5."}<br><br>
+    <b style="color:var(--amber)">[GRADIENTE CONJ.]</b> Opera sobre el sistema normal A^TA·x=A^Tb. Converge en máx. ${N} pasos teóricos para SPD. Las soluciones x₁,x₂,x₃ deben coincidir con los otros métodos si el sistema es consistente.
+  `;
+    }
+
+    function switchTab(name, btn) {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tab-pane").forEach(p => p.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById("tab-" + name).classList.add("active");
+    }
+
+    setInterval(() => document.getElementById("topClock").textContent = new Date().toTimeString().slice(0, 8), 1000);
+    buildScenarioList();
+    buildMethodGrid();
+    buildMethodDescCards();
+    selectScenario(SCENARIOS[0]);
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InterpCalc — Análisis de Precios por Interpolación</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f14;
+    --surface: #13161e;
+    --surface2: #1a1e2a;
+    --surface3: #222736;
+    --border: #2a2f40;
+    --accent: #e8c547;
+    --accent2: #5b9bd5;
+    --accent3: #e05a5a;
+    --accent4: #5bcfa8;
+    --text: #e8eaf2;
+    --text-muted: #7a80a0;
+    --text-dim: #3d4260;
+    --lagrange: #e8c547;
+    --newton: #5b9bd5;
+    --spline: #5bcfa8;
+    --font-display: 'Syne', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --font-serif: 'Libre Baskerville', serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-display);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  header {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(13,15,20,0.85);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 60px;
+  }
+  .logo {
+    font-size: 1.1rem; font-weight: 800; letter-spacing: -0.02em;
+    display: flex; align-items: center; gap: 0.6rem;
+  }
+  .logo-mark {
+    width: 28px; height: 28px;
+    background: var(--accent);
+    clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.7rem; color: #000; font-weight: 800;
+  }
+  .logo span { color: var(--accent); }
+  .header-meta {
+    font-family: var(--font-mono); font-size: 0.72rem;
+    color: var(--text-muted); letter-spacing: 0.05em;
+  }
+  .header-tags { display: flex; gap: 0.5rem; }
+  .tag {
+    font-family: var(--font-mono); font-size: 0.65rem;
+    padding: 3px 8px; border-radius: 2px;
+    background: var(--surface3); color: var(--text-muted);
+    border: 1px solid var(--border);
+  }
+  .tag.active { background: var(--accent); color: #000; border-color: var(--accent); }
+
+  .hero {
+    padding: 4rem 2rem 2rem;
+    max-width: 1400px; margin: 0 auto;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 3rem;
+    align-items: start;
+  }
+  .hero-text h1 {
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    font-weight: 800; line-height: 1.05;
+    letter-spacing: -0.03em;
+    margin-bottom: 1rem;
+  }
+  .hero-text h1 em {
+    font-style: italic; font-family: var(--font-serif);
+    color: var(--accent);
+  }
+  .scenario-badge {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    background: var(--surface2); border: 1px solid var(--border);
+    padding: 6px 12px; border-radius: 3px;
+    font-family: var(--font-mono); font-size: 0.7rem;
+    color: var(--accent); letter-spacing: 0.08em;
+    margin-bottom: 1.5rem;
+  }
+  .scenario-badge::before { content: '◆'; font-size: 0.5rem; }
+  .hero-desc {
+    color: var(--text-muted); font-size: 0.9rem; line-height: 1.7;
+    font-family: var(--font-serif); font-style: italic;
+    max-width: 420px;
+  }
+  .method-pills {
+    display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1.5rem;
+  }
+  .method-pill {
+    font-family: var(--font-mono); font-size: 0.7rem;
+    padding: 5px 12px; border-radius: 2px; border: 1px solid;
+    cursor: pointer; transition: all 0.2s;
+    background: transparent;
+  }
+  .pill-lagrange { color: var(--lagrange); border-color: var(--lagrange); }
+  .pill-newton { color: var(--newton); border-color: var(--newton); }
+  .pill-spline { color: var(--spline); border-color: var(--spline); }
+  .method-pill.on { color: #000 !important; }
+  .pill-lagrange.on { background: var(--lagrange); }
+  .pill-newton.on { background: var(--newton); }
+  .pill-spline.on { background: var(--spline); }
+
+  .data-editor {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; overflow: hidden;
+  }
+  .editor-header {
+    background: var(--surface2); padding: 0.75rem 1rem;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+  .editor-title {
+    font-family: var(--font-mono); font-size: 0.75rem;
+    color: var(--text-muted); letter-spacing: 0.05em;
+  }
+  .editor-actions { display: flex; gap: 0.5rem; }
+  .btn-sm {
+    font-family: var(--font-mono); font-size: 0.65rem;
+    padding: 4px 10px; border-radius: 2px; border: 1px solid var(--border);
+    background: transparent; color: var(--text-muted); cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-sm:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-sm.primary { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
+  .btn-sm.primary:hover { background: #d4b03a; }
+  .btn-sm.danger { color: var(--accent3); border-color: var(--accent3); }
+  .btn-sm.danger:hover { background: var(--accent3); color: #fff; }
+
+  .data-table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  thead tr { background: var(--surface3); }
+  th {
+    font-family: var(--font-mono); font-size: 0.68rem;
+    color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em;
+    padding: 0.6rem 1rem; text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  td { padding: 0; border-bottom: 1px solid var(--border); }
+  td:last-child { width: 40px; }
+  .cell-input {
+    width: 100%; padding: 0.55rem 1rem;
+    background: transparent; border: none; outline: none;
+    color: var(--text); font-family: var(--font-mono); font-size: 0.82rem;
+    transition: background 0.15s;
+  }
+  .cell-input:focus { background: var(--surface3); }
+  .cell-input.highlight { color: var(--accent); }
+  .row-del {
+    background: transparent; border: none;
+    color: var(--text-dim); cursor: pointer; font-size: 0.8rem;
+    width: 40px; height: 100%; display: flex; align-items: center; justify-content: center;
+    transition: color 0.15s;
+  }
+  .row-del:hover { color: var(--accent3); }
+  tr:hover .row-del { color: var(--text-muted); }
+
+  .main {
+    max-width: 1400px; margin: 0 auto;
+    padding: 0 2rem 4rem;
+    display: grid; grid-template-columns: 340px 1fr; gap: 1.5rem;
+  }
+
+  .sidebar { display: flex; flex-direction: column; gap: 1rem; }
+
+  .panel {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; overflow: hidden;
+  }
+  .panel-head {
+    padding: 0.75rem 1rem;
+    background: var(--surface2); border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .panel-head h3 {
+    font-family: var(--font-mono); font-size: 0.72rem;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .panel-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent); flex-shrink: 0;
+  }
+  .panel-dot.blue { background: var(--accent2); }
+  .panel-dot.green { background: var(--accent4); }
+  .panel-dot.red { background: var(--accent3); }
+  .panel-body { padding: 1rem; }
+
+  .query-row {
+    display: flex; gap: 0.5rem; align-items: center;
+    margin-bottom: 0.75rem;
+  }
+  .query-label {
+    font-family: var(--font-mono); font-size: 0.7rem;
+    color: var(--text-muted); white-space: nowrap;
+  }
+  .query-input {
+    flex: 1; padding: 0.45rem 0.75rem;
+    background: var(--surface3); border: 1px solid var(--border);
+    border-radius: 3px; color: var(--text);
+    font-family: var(--font-mono); font-size: 0.82rem;
+    outline: none; transition: border-color 0.15s;
+  }
+  .query-input:focus { border-color: var(--accent); }
+  .big-btn {
+    width: 100%; padding: 0.7rem;
+    background: var(--accent); color: #000;
+    border: none; border-radius: 3px;
+    font-family: var(--font-display); font-size: 0.85rem; font-weight: 700;
+    cursor: pointer; transition: all 0.2s; letter-spacing: 0.02em;
+  }
+  .big-btn:hover { background: #d4b03a; transform: translateY(-1px); }
+  .big-btn:active { transform: translateY(0); }
+
+  .result-cards { display: flex; flex-direction: column; gap: 0.6rem; }
+  .result-card {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 4px; padding: 0.75rem;
+    border-left: 3px solid transparent;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .result-card.lagrange { border-left-color: var(--lagrange); }
+  .result-card.newton { border-left-color: var(--newton); }
+  .result-card.spline { border-left-color: var(--spline); }
+  .rc-label {
+    font-family: var(--font-mono); font-size: 0.65rem;
+    color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em;
+    margin-bottom: 0.3rem;
+  }
+  .rc-value {
+    font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .rc-value .bs { font-size: 0.75rem; font-weight: 400; color: var(--text-muted); margin-left: 3px; }
+  .rc-sub {
+    font-family: var(--font-mono); font-size: 0.62rem;
+    color: var(--text-muted); margin-top: 0.2rem;
+  }
+  .lagrange .rc-value { color: var(--lagrange); }
+  .newton .rc-value { color: var(--newton); }
+  .spline .rc-value { color: var(--spline); }
+
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+  .stat-box {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 4px; padding: 0.7rem;
+  }
+  .stat-label { font-family: var(--font-mono); font-size: 0.62rem; color: var(--text-muted); margin-bottom: 0.3rem; }
+  .stat-value { font-size: 1.1rem; font-weight: 700; }
+  .stat-value.up { color: var(--accent3); }
+  .stat-value.ok { color: var(--accent4); }
+
+  .chart-area { display: flex; flex-direction: column; gap: 1rem; }
+
+  .chart-panel {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; overflow: hidden;
+    position: relative;
+  }
+  .chart-toolbar {
+    padding: 0.75rem 1rem;
+    background: var(--surface2); border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 1rem; flex-wrap: wrap;
+  }
+  .chart-title {
+    font-size: 0.8rem; font-weight: 700; letter-spacing: -0.01em;
+  }
+  .chart-legend { display: flex; gap: 1rem; }
+  .legend-item {
+    display: flex; align-items: center; gap: 0.35rem;
+    font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted);
+    cursor: pointer; opacity: 0.5; transition: opacity 0.2s;
+  }
+  .legend-item.active { opacity: 1; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .legend-dash {
+    width: 16px; height: 2px; border-radius: 1px;
+  }
+
+  #mainChart {
+    width: 100%; display: block;
+    background: var(--bg);
+  }
+
+  .tabs-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+  .tabs-bar {
+    display: flex; background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+  }
+  .tab-btn {
+    flex: 1; padding: 0.7rem 1rem;
+    background: transparent; border: none;
+    font-family: var(--font-mono); font-size: 0.7rem;
+    color: var(--text-muted); cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s; letter-spacing: 0.05em;
+  }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab-content { padding: 1.25rem; display: none; }
+  .tab-content.active { display: block; }
+
+  .poly-block {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 4px; padding: 1rem; margin-bottom: 1rem;
+    border-left: 3px solid var(--lagrange);
+  }
+  .poly-block.nb { border-left-color: var(--newton); }
+  .poly-block.sp { border-left-color: var(--spline); }
+  .poly-label {
+    font-family: var(--font-mono); font-size: 0.65rem;
+    color: var(--text-muted); margin-bottom: 0.5rem; letter-spacing: 0.06em;
+  }
+  .poly-eq {
+    font-family: var(--font-mono); font-size: 0.78rem;
+    color: var(--text); line-height: 1.8;
+    word-break: break-all;
+  }
+  .poly-eq .term { color: var(--accent); }
+  .poly-eq .term.blue { color: var(--accent2); }
+  .poly-eq .term.green { color: var(--accent4); }
+
+  .dd-table { width: 100%; border-collapse: collapse; font-family: var(--font-mono); font-size: 0.72rem; }
+  .dd-table th {
+    background: var(--surface3); padding: 0.5rem 0.75rem;
+    text-align: right; color: var(--text-muted);
+    border: 1px solid var(--border);
+  }
+  .dd-table th:first-child { text-align: left; }
+  .dd-table td {
+    padding: 0.45rem 0.75rem; text-align: right;
+    border: 1px solid var(--border); color: var(--text);
+  }
+  .dd-table td:first-child { text-align: left; color: var(--text-muted); }
+  .dd-table .diag { color: var(--newton); font-weight: 600; }
+  .dd-table tr:hover td { background: var(--surface3); }
+
+  .spline-segments { display: flex; flex-direction: column; gap: 0.6rem; }
+  .seg-card {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 4px; padding: 0.75rem;
+    display: grid; grid-template-columns: auto 1fr; gap: 0.75rem;
+    align-items: start;
+  }
+  .seg-num {
+    font-family: var(--font-mono); font-size: 0.65rem;
+    color: var(--accent4); background: rgba(91,207,168,0.1);
+    padding: 4px 8px; border-radius: 2px; white-space: nowrap;
+  }
+  .seg-eq { font-family: var(--font-mono); font-size: 0.74rem; color: var(--text); line-height: 1.7; }
+  .seg-eq span { color: var(--accent4); }
+
+  .error-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; }
+  .error-box {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 4px; padding: 0.9rem; text-align: center;
+  }
+  .error-box .val { font-size: 1.3rem; font-weight: 700; }
+  .error-box .val.good { color: var(--accent4); }
+  .error-box .val.warn { color: var(--accent); }
+  .error-box .val.bad { color: var(--accent3); }
+  .error-box .lbl {
+    font-family: var(--font-mono); font-size: 0.62rem;
+    color: var(--text-muted); margin-top: 0.3rem;
+  }
+  .error-note {
+    font-family: var(--font-serif); font-style: italic;
+    font-size: 0.82rem; color: var(--text-muted); line-height: 1.7;
+    margin-top: 1rem; padding: 0.75rem;
+    border-left: 2px solid var(--border); background: var(--surface2);
+    border-radius: 0 4px 4px 0;
+  }
+
+  .cmp-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  .cmp-table th {
+    background: var(--surface3); padding: 0.6rem 0.75rem;
+    font-family: var(--font-mono); font-size: 0.65rem;
+    color: var(--text-muted); border: 1px solid var(--border);
+    text-align: left; letter-spacing: 0.06em;
+  }
+  .cmp-table td { padding: 0.5rem 0.75rem; border: 1px solid var(--border); }
+  .cmp-table tr:hover td { background: var(--surface3); }
+  .cmp-badge {
+    font-family: var(--font-mono); font-size: 0.68rem;
+    padding: 2px 7px; border-radius: 2px;
+  }
+  .badge-L { background: rgba(232,197,71,0.15); color: var(--lagrange); }
+  .badge-N { background: rgba(91,155,213,0.15); color: var(--newton); }
+  .badge-S { background: rgba(91,207,168,0.15); color: var(--spline); }
+
+  footer {
+    border-top: 1px solid var(--border); padding: 1.5rem 2rem;
+    max-width: 1400px; margin: 0 auto;
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-dim);
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .animate-in { animation: fadeIn 0.3s ease forwards; }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  .live-dot {
+    display: inline-block; width: 6px; height: 6px;
+    background: var(--accent4); border-radius: 50%;
+    animation: pulse-dot 1.5s infinite;
+    vertical-align: middle; margin-right: 4px;
+  }
+
+  .tooltip-overlay {
+    position: absolute; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: 4px;
+    padding: 0.5rem 0.75rem; pointer-events: none;
+    font-family: var(--font-mono); font-size: 0.72rem;
+    z-index: 50; box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    transition: opacity 0.1s;
+  }
+  .tooltip-overlay .t-day { color: var(--text-muted); margin-bottom: 3px; }
+  .tooltip-overlay .t-row { display: flex; align-items: center; gap: 0.4rem; margin: 2px 0; }
+  .tooltip-overlay .t-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .tooltip-overlay .t-val { font-weight: 600; }
+
+  .sep { height: 1px; background: var(--border); margin: 0.75rem 0; }
+
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 2px; }
+
+  @media (max-width: 900px) {
+    .hero { grid-template-columns: 1fr; }
+    .main { grid-template-columns: 1fr; }
+    .error-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  header {
+    display: none !important;
+  }
+
+  h1 {
+    display: none !important;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-mark">∫</div>
+    Interp<span>Calc</span>
+  </div>
+  <div class="header-meta">ESCENARIO C — DESABASTECIMIENTO</div>
+  <div class="header-tags">
+    <span class="tag active" id="tagL">Lagrange</span>
+    <span class="tag active" id="tagN">Newton</span>
+    <span class="tag active" id="tagS">Splines</span>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="hero-text">
+    <div class="scenario-badge">ESCENARIO C — NUMÉRICO III</div>
+    <h1>Curva continua<br>de <em>precios</em><br>básicos</h1>
+    <p class="hero-desc">Análisis de variación de precios de productos básicos en mercados clave. Datos dispersos transformados en curva continua mediante tres métodos de interpolación numérica.</p>
+    <div class="method-pills">
+      <button class="method-pill pill-lagrange on" onclick="toggleMethod('lagrange',this)">◆ Lagrange</button>
+      <button class="method-pill pill-newton on" onclick="toggleMethod('newton',this)">◆ Newton</button>
+      <button class="method-pill pill-spline on" onclick="toggleMethod('spline',this)">◆ Cúbico Spline</button>
+    </div>
+  </div>
+
+  <div class="data-editor" id="dataEditor">
+    <div class="editor-header">
+      <span class="editor-title">// DATOS DE MERCADO — EDITABLE</span>
+      <div class="editor-actions">
+        <button class="btn-sm" onclick="addRow()">+ Fila</button>
+        <button class="btn-sm" onclick="loadDefault()">↺ Reset</button>
+        <button class="btn-sm primary" onclick="runAll()">▶ Calcular</button>
+      </div>
+    </div>
+    <div class="data-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Día (x)</th>
+            <th>Precio Bs (y)</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="dataBody"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<div class="main">
+  <aside class="sidebar">
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-dot"></div>
+        <h3>Consultar día</h3>
+      </div>
+      <div class="panel-body">
+        <div class="query-row">
+          <span class="query-label">Día =</span>
+          <input class="query-input" type="number" id="queryDay" value="7" min="1" max="60" step="0.5">
+        </div>
+        <button class="big-btn" onclick="queryDay()">Estimar precio</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-dot red"></div>
+        <h3>Resultados</h3>
+      </div>
+      <div class="panel-body">
+        <div class="result-cards" id="resultCards">
+          <div style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-dim);text-align:center;padding:1rem 0">
+            — Ejecuta un cálculo primero —
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-dot blue"></div>
+        <h3>Estadísticas</h3>
+      </div>
+      <div class="panel-body">
+        <div class="stats-grid" id="statsGrid">
+          <div class="stat-box">
+            <div class="stat-label">PRECIO INICIAL</div>
+            <div class="stat-value" id="statInit">—</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">PRECIO FINAL</div>
+            <div class="stat-value" id="statFinal">—</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">INCREMENTO</div>
+            <div class="stat-value up" id="statDelta">—</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">PROMEDIO/DÍA</div>
+            <div class="stat-value ok" id="statAvgDay">—</div>
+          </div>
+        </div>
+        <div class="sep"></div>
+        <div style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text-muted);">
+          <span class="live-dot"></span>Datos actualizados en tiempo real
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-dot green"></div>
+        <h3>Comparativa métodos</h3>
+      </div>
+      <div class="panel-body" id="cmpSummary">
+        <div style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-dim);text-align:center;padding:0.5rem 0">— Sin datos —</div>
+      </div>
+    </div>
+  </aside>
+
+  <div class="chart-area">
+    <div class="chart-panel">
+      <div class="chart-toolbar">
+        <span class="chart-title">Curva continua de precios — Interpolación múltiple</span>
+        <div class="chart-legend">
+          <div class="legend-item active" id="legL" onclick="toggleLegend('lagrange')">
+            <div class="legend-dash" style="background:var(--lagrange)"></div>
+            <span>Lagrange</span>
+          </div>
+          <div class="legend-item active" id="legN" onclick="toggleLegend('newton')">
+            <div class="legend-dash" style="background:var(--newton)"></div>
+            <span>Newton</span>
+          </div>
+          <div class="legend-item active" id="legS" onclick="toggleLegend('spline')">
+            <div class="legend-dash" style="background:var(--spline)"></div>
+            <span>Spline</span>
+          </div>
+          <div class="legend-item active">
+            <div class="legend-dot" style="background:#fff"></div>
+            <span>Datos</span>
+          </div>
+        </div>
+      </div>
+      <div style="position:relative">
+        <canvas id="mainChart" height="360"></canvas>
+        <div class="tooltip-overlay" id="tooltip" style="opacity:0;position:absolute;top:0;left:0"></div>
+      </div>
+    </div>
+
+    <div class="tabs-wrap">
+      <div class="tabs-bar">
+        <button class="tab-btn active" onclick="openTab('tPoly',this)">POLINOMIOS</button>
+        <button class="tab-btn" onclick="openTab('tDD',this)">DIFS. DIVIDIDAS</button>
+        <button class="tab-btn" onclick="openTab('tSpline',this)">SPLINES</button>
+        <button class="tab-btn" onclick="openTab('tError',this)">ANÁLISIS ERROR</button>
+        <button class="tab-btn" onclick="openTab('tComp',this)">COMPARATIVA</button>
+      </div>
+      <div class="tab-content active" id="tPoly">
+        <div class="poly-block">
+          <div class="poly-label">// POLINOMIO DE LAGRANGE — P(x)</div>
+          <div class="poly-eq" id="polyLagrange">Carga los datos y presiona ▶ Calcular</div>
+        </div>
+        <div class="poly-block nb">
+          <div class="poly-label">// POLINOMIO DE NEWTON — P(x)</div>
+          <div class="poly-eq" id="polyNewton">—</div>
+        </div>
+      </div>
+      <div class="tab-content" id="tDD">
+        <div class="poly-label" style="margin-bottom:0.75rem">// TABLA DE DIFERENCIAS DIVIDIDAS DE NEWTON</div>
+        <div style="overflow-x:auto" id="ddTableWrap">
+          <div style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-dim)">— Sin calcular —</div>
+        </div>
+      </div>
+      <div class="tab-content" id="tSpline">
+        <div class="poly-label" style="margin-bottom:0.75rem">// SPLINES CÚBICOS — SEGMENTOS</div>
+        <div class="spline-segments" id="splineSegs">
+          <div style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-dim)">— Sin calcular —</div>
+        </div>
+      </div>
+      <div class="tab-content" id="tError">
+        <div id="errorContent">
+          <div style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-dim)">— Sin calcular —</div>
+        </div>
+      </div>
+      <div class="tab-content" id="tComp">
+        <div style="overflow-x:auto" id="compTableWrap">
+          <div style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-dim)">— Sin calcular —</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <span>InterpCalc — Métodos Numéricos III / Escenario C</span>
+  <span>Lagrange · Newton · Splines Cúbicos · © 2025</span>
+</footer>
+
+<script>
+let dataPoints = [];
+let visibleMethods = { lagrange: true, newton: true, spline: true };
+let lastQueryDay = null;
+let lastResults = {};
+let currentPts = []; // Almacena los puntos calculados actualmente
+
+const DEFAULT_DATA = [
+  {x:1,  y:8},
+  {x:5,  y:10},
+  {x:10, y:13},
+  {x:15, y:16},
+  {x:20, y:19},
+  {x:30, y:22}
+];
+
+function init() {
+  loadDefault();
+}
+
+function loadDefault() {
+  dataPoints = DEFAULT_DATA.map(d => ({...d}));
+  renderDataTable();
+  runAll(); // Solo al resetear o cargar
+}
+
+function renderDataTable() {
+  const body = document.getElementById('dataBody');
+  body.innerHTML = '';
+  dataPoints.forEach((pt, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input class="cell-input highlight" type="number" value="${pt.x}" step="0.5"
+        onchange="updatePoint(${i},'x',this.value)"></td>
+      <td><input class="cell-input" type="number" value="${pt.y}" step="0.1"
+        onchange="updatePoint(${i},'y',this.value)"></td>
+      <td><button class="row-del" onclick="removeRow(${i})">✕</button></td>
+    `;
+    body.appendChild(tr);
+  });
+}
+
+function updatePoint(i, key, val) {
+  dataPoints[i][key] = parseFloat(val) || 0;
+  // NO actualizar nada automáticamente
+}
+
+function addRow() {
+  const lastX = dataPoints.length ? dataPoints[dataPoints.length-1].x : 0;
+  dataPoints.push({x: lastX+5, y:0});
+  renderDataTable();
+}
+
+function removeRow(i) {
+  if (dataPoints.length <= 2) return;
+  dataPoints.splice(i,1);
+  renderDataTable();
+}
+
+function lagrange(pts, x) {
+  const n = pts.length;
+  let result = 0;
+  for (let i = 0; i < n; i++) {
+    let term = pts[i].y;
+    for (let j = 0; j < n; j++) {
+      if (j !== i) {
+        term *= (x - pts[j].x) / (pts[i].x - pts[j].x);
+      }
+    }
+    result += term;
+  }
+  return result;
+}
+
+function buildLagrangePolynomial(pts) {
+  const n = pts.length;
+  let terms = [];
+  for (let i = 0; i < n; i++) {
+    let num = [], den = 1;
+    for (let j = 0; j < n; j++) {
+      if (j !== i) {
+        num.push(`(x - ${pts[j].x})`);
+        den *= (pts[i].x - pts[j].x);
+      }
+    }
+    const coef = (pts[i].y / den).toFixed(4);
+    terms.push(`${coef} · ${num.join('·')}`);
+  }
+  return terms;
+}
+
+function buildDivDiff(pts) {
+  const n = pts.length;
+  const dd = [];
+  for (let i = 0; i < n; i++) dd.push([...Array(n).fill(null)]);
+  for (let i = 0; i < n; i++) dd[i][0] = pts[i].y;
+  for (let j = 1; j < n; j++) {
+    for (let i = 0; i < n-j; i++) {
+      dd[i][j] = (dd[i+1][j-1] - dd[i][j-1]) / (pts[i+j].x - pts[i].x);
+    }
+  }
+  return dd;
+}
+
+function newton(pts, x) {
+  const dd = buildDivDiff(pts);
+  const n = pts.length;
+  let result = dd[0][0];
+  let prod = 1;
+  for (let k = 1; k < n; k++) {
+    prod *= (x - pts[k-1].x);
+    result += dd[0][k] * prod;
+  }
+  return result;
+}
+
+function buildNewtonPolynomial(pts, dd) {
+  const n = pts.length;
+  let terms = [`${dd[0][0].toFixed(4)}`];
+  let accumulated = '';
+  for (let k = 1; k < n; k++) {
+    accumulated += `(x-${pts[k-1].x})`;
+    if (Math.abs(dd[0][k]) > 1e-10) {
+      const coef = dd[0][k].toFixed(4);
+      terms.push(`${coef > 0 ? '+' : ''}${coef}·${accumulated}`);
+    }
+  }
+  return terms;
+}
+
+function buildCubicSplines(pts) {
+  const n = pts.length;
+  const h = [], alpha = [], l = [], mu = [], z = [];
+  const a = pts.map(p => p.y);
+  const x = pts.map(p => p.x);
+
+  for (let i = 0; i < n-1; i++) h.push(x[i+1] - x[i]);
+  for (let i = 1; i < n-1; i++)
+    alpha.push(3/h[i]*(a[i+1]-a[i]) - 3/h[i-1]*(a[i]-a[i-1]));
+
+  l.push(1); mu.push(0); z.push(0);
+  for (let i = 1; i < n-1; i++) {
+    l.push(2*(x[i+1]-x[i-1]) - h[i-1]*mu[i-1]);
+    mu.push(h[i]/l[i]);
+    z.push((alpha[i-1] - h[i-1]*z[i-1])/l[i]);
+  }
+  l.push(1); z.push(0);
+
+  const c = Array(n).fill(0);
+  const b = Array(n-1).fill(0);
+  const d = Array(n-1).fill(0);
+
+  for (let j = n-2; j >= 0; j--) {
+    c[j] = z[j] - mu[j]*c[j+1];
+    b[j] = (a[j+1]-a[j])/h[j] - h[j]*(c[j+1]+2*c[j])/3;
+    d[j] = (c[j+1]-c[j])/(3*h[j]);
+  }
+
+  const segments = [];
+  for (let i = 0; i < n-1; i++) {
+    segments.push({
+      x0: x[i], x1: x[i+1],
+      a: a[i], b: b[i], c: c[i], d: d[i]
+    });
+  }
+  return segments;
+}
+
+function evalSpline(segments, x) {
+  if (x <= segments[0].x0) {
+    const s = segments[0];
+    const t = x - s.x0;
+    return s.a + s.b*t + s.c*t*t + s.d*t*t*t;
+  }
+  if (x >= segments[segments.length-1].x1) {
+    const s = segments[segments.length-1];
+    const t = x - s.x0;
+    return s.a + s.b*t + s.c*t*t + s.d*t*t*t;
+  }
+  for (const s of segments) {
+    if (x >= s.x0 && x <= s.x1) {
+      const t = x - s.x0;
+      return s.a + s.b*t + s.c*t*t + s.d*t*t*t;
+    }
+  }
+  return null;
+}
+
+function getSortedPoints() {
+  return [...dataPoints].sort((a,b) => a.x - b.x);
+}
+
+function runAll() {
+  currentPts = getSortedPoints();
+  if (currentPts.length < 2) return;
+
+  const dd = buildDivDiff(currentPts);
+  const splineSegs = buildCubicSplines(currentPts);
+
+  updateStats(currentPts);
+  updatePolyTab(currentPts, dd);
+  updateDDTab(currentPts, dd);
+  updateSplineTab(splineSegs, currentPts);
+  updateErrorTab(currentPts, dd, splineSegs);
+  updateCompTab(currentPts, dd, splineSegs);
+  drawChart(currentPts, dd, splineSegs);
+
+  if (lastQueryDay !== null) {
+    updateQueryResults(currentPts, splineSegs, lastQueryDay);
+  }
+}
+
+function queryDay() {
+  if (currentPts.length < 2) {
+    alert("Primero debes presionar 'Calcular' con los datos cargados");
+    return;
+  }
+  const day = parseFloat(document.getElementById('queryDay').value);
+  if (isNaN(day)) return;
+  lastQueryDay = day;
+  
+  const splineSegs = buildCubicSplines(currentPts);
+  updateQueryResults(currentPts, splineSegs, day);
+}
+
+function updateQueryResults(pts, splineSegs, day) {
+  const vL = lagrange(pts, day);
+  const vN = newton(pts, day);
+  const vS = evalSpline(splineSegs, day);
+
+  lastResults = { lagrange: vL, newton: vN, spline: vS, day };
+
+  const container = document.getElementById('resultCards');
+  container.innerHTML = `
+    <div class="result-card lagrange animate-in">
+      <div class="rc-label">Lagrange — Día ${day}</div>
+      <div class="rc-value">${vL.toFixed(4)}<span class="bs">Bs</span></div>
+      <div class="rc-sub">P(${day}) via L(x)</div>
+    </div>
+    <div class="result-card newton animate-in" style="animation-delay:0.05s">
+      <div class="rc-label">Newton — Día ${day}</div>
+      <div class="rc-value">${vN.toFixed(4)}<span class="bs">Bs</span></div>
+      <div class="rc-sub">P(${day}) via DD</div>
+    </div>
+    <div class="result-card spline animate-in" style="animation-delay:0.1s">
+      <div class="rc-label">Spline Cúbico — Día ${day}</div>
+      <div class="rc-value">${vS.toFixed(4)}<span class="bs">Bs</span></div>
+      <div class="rc-sub">S(${day}) natural cubic</div>
+    </div>
+  `;
+
+  updateCmpSummary(pts, splineSegs, day, vL, vN, vS);
+  drawChartWithQuery(pts, splineSegs, day);
+}
+
+function updateCmpSummary(pts, splineSegs, day, vL, vN, vS) {
+  const container = document.getElementById('cmpSummary');
+  const diffLN = Math.abs(vL-vN).toFixed(6);
+  const diffLS = Math.abs(vL-vS).toFixed(4);
+  container.innerHTML = `
+    <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text-muted);margin-bottom:0.5rem">Día ${day} — diferencias entre métodos</div>
+    <div style="font-family:var(--font-mono);font-size:0.72rem;line-height:2">
+      <span style="color:var(--lagrange)">L</span> vs <span style="color:var(--newton)">N</span>: <strong>${diffLN}</strong> Bs<br>
+      <span style="color:var(--lagrange)">L</span> vs <span style="color:var(--spline)">S</span>: <strong>${diffLS}</strong> Bs<br>
+      <span style="color:var(--newton)">N</span> vs <span style="color:var(--spline)">S</span>: <strong>${Math.abs(vN-vS).toFixed(4)}</strong> Bs
+    </div>
+    <div class="sep"></div>
+    <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--text-muted)">
+      L=N esperado (mismo polinomio). Spline difiere más en extrapolación.
+    </div>
+  `;
+}
+
+function updateStats(pts) {
+  const first = pts[0], last = pts[pts.length-1];
+  const delta = last.y - first.y;
+  const days = last.x - first.x;
+  document.getElementById('statInit').textContent = first.y.toFixed(2) + ' Bs';
+  document.getElementById('statFinal').textContent = last.y.toFixed(2) + ' Bs';
+  document.getElementById('statDelta').textContent = (delta >= 0 ? '+' : '') + delta.toFixed(2) + ' Bs';
+  document.getElementById('statAvgDay').textContent = (delta/days).toFixed(3) + ' Bs/d';
+}
+
+function updatePolyTab(pts, dd) {
+  const lagTerms = buildLagrangePolynomial(pts);
+  const newTerms = buildNewtonPolynomial(pts, dd);
+
+  const fmtTerms = (terms) => terms.map((t,i) =>
+    `<span class="term${i>0?' blue':''}">${i>0 ? '\n  + ' : ''}${t}</span>`
+  ).join('');
+
+  document.getElementById('polyLagrange').innerHTML = 'P(x) = ' + fmtTerms(lagTerms);
+  document.getElementById('polyNewton').innerHTML = 'P(x) = ' + fmtTerms(newTerms);
+}
+
+function updateDDTab(pts, dd) {
+  const n = pts.length;
+  const wrap = document.getElementById('ddTableWrap');
+  let html = '<table class="dd-table"><thead><tr><th>x</th><th>f[x]</th>';
+  for (let k = 1; k < n; k++) html += `<th>Δ<sup>${k}</sup></th>`;
+  html += '</tr></thead><tbody>';
+  for (let i = 0; i < n; i++) {
+    html += `<tr><td>${pts[i].x}</td>`;
+    for (let j = 0; j < n; j++) {
+      if (dd[i][j] !== null) {
+        const cls = j===0 ? '' : (i===0 ? ' class="diag"' : '');
+        html += `<td${cls}>${dd[i][j].toFixed(4)}</td>`;
+      } else {
+        html += '<td style="color:var(--text-dim)">—</td>';
+      }
+    }
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+}
+
+function updateSplineTab(segs, pts) {
+  const container = document.getElementById('splineSegs');
+  let html = '';
+  segs.forEach((s, i) => {
+    const a = s.a.toFixed(4), b = s.b.toFixed(4),
+          c = s.c.toFixed(6), d = s.d.toFixed(6);
+    const bSign = s.b >= 0 ? '+' : '', cSign = s.c >= 0 ? '+' : '', dSign = s.d >= 0 ? '+' : '';
+    html += `
+      <div class="seg-card">
+        <div class="seg-num">S${i+1}<br>${s.x0}≤x≤${s.x1}</div>
+        <div class="seg-eq">
+          S<sub>${i+1}</sub>(x) = <span>${a}</span>
+          ${bSign}<span>${b}</span>(x-${s.x0})
+          ${cSign}<span>${c}</span>(x-${s.x0})²
+          ${dSign}<span>${d}</span>(x-${s.x0})³
+        </div>
+      </div>`;
+  });
+  container.innerHTML = html;
+}
+
+function updateErrorTab(pts, dd, segs) {
+  const interior = pts.slice(1, pts.length-1);
+  if (interior.length === 0) {
+    document.getElementById('errorContent').innerHTML = '<p style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-muted)">Necesitas al menos 3 puntos para el análisis de error.</p>';
+    return;
+  }
+
+  let errL = 0, errN = 0, errS = 0, count = 0;
+  interior.forEach(pt => {
+    const ptsWithout = pts.filter(p => p.x !== pt.x);
+    if (ptsWithout.length < 2) return;
+    const ddW = buildDivDiff(ptsWithout);
+    const segsW = buildCubicSplines(ptsWithout);
+    const vL = Math.abs(lagrange(ptsWithout, pt.x) - pt.y);
+    const vN = Math.abs(newton(ptsWithout, pt.x) - pt.y);
+    const vS = Math.abs(evalSpline(segsW, pt.x) - pt.y);
+    errL += vL; errN += vN; errS += vS; count++;
+  });
+
+  errL /= count; errN /= count; errS /= count;
+  const minErr = Math.min(errL, errN, errS);
+  const cls = e => e === minErr ? 'good' : (e < 1 ? 'warn' : 'bad');
+
+  const xMin = pts[0].x, xMax = pts[pts.length-1].x;
+  const xTest = Array.from({length: 200}, (_,i) => xMin + i*(xMax-xMin)/199);
+  let maxL = -Infinity, minL = Infinity;
+  xTest.forEach(x => {
+    const v = lagrange(pts, x);
+    if (v > maxL) maxL = v; if (v < minL) minL = v;
+  });
+  const oscillL = maxL - minL;
+  let maxS = -Infinity, minS = Infinity;
+  xTest.forEach(x => {
+    const v = evalSpline(segs, x);
+    if (v > maxS) maxS = v; if (v < minS) minS = v;
+  });
+  const oscillS = maxS - minS;
+  const oscillRatio = ((oscillL - oscillS)/oscillL * 100).toFixed(1);
+
+  document.getElementById('errorContent').innerHTML = `
+    <div class="error-grid">
+      <div class="error-box">
+        <div class="val ${cls(errL)}">${errL.toFixed(4)}</div>
+        <div class="lbl">ERROR MEDIO<br>LAGRANGE</div>
+      </div>
+      <div class="error-box">
+        <div class="val ${cls(errN)}">${errN.toFixed(4)}</div>
+        <div class="lbl">ERROR MEDIO<br>NEWTON</div>
+      </div>
+      <div class="error-box">
+        <div class="val ${cls(errS)}">${errS.toFixed(4)}</div>
+        <div class="lbl">ERROR MEDIO<br>SPLINE</div>
+      </div>
+    </div>
+    <div class="sep"></div>
+    <div class="error-grid" style="grid-template-columns:1fr 1fr">
+      <div class="error-box">
+        <div class="val warn">${oscillL.toFixed(2)}</div>
+        <div class="lbl">OSCILACIÓN<br>LAGRANGE (Bs)</div>
+      </div>
+      <div class="error-box">
+        <div class="val good">${oscillS.toFixed(2)}</div>
+        <div class="lbl">OSCILACIÓN<br>SPLINE (Bs)</div>
+      </div>
+    </div>
+    <div class="error-note">
+      <strong>Interpretación:</strong> El método con menor error de validación cruzada es el más confiable para datos con brechas. 
+      Los Splines cúbicos reducen la oscilación en un <strong>${oscillRatio > 0 ? oscillRatio : 0}%</strong> respecto a Lagrange — 
+      fenómeno de Runge especialmente notable en datos dispersos de mercado. 
+      Newton y Lagrange producen <em>exactamente</em> el mismo polinomio matemáticamente; la diferencia numérica es solo error de redondeo.
+      Para datos muy dispersos (pocos puntos separados), los splines son significativamente más estables.
+    </div>
+  `;
+}
+
+function updateCompTab(pts, dd, segs) {
+  const xMin = pts[0].x, xMax = pts[pts.length-1].x;
+  const testDays = [];
+  const step = (xMax - xMin) / 9;
+  for (let i = 0; i <= 9; i++) testDays.push(+(xMin + i*step).toFixed(1));
+
+  let html = `<table class="cmp-table">
+    <thead><tr>
+      <th>DÍA</th>
+      <th><span class="cmp-badge badge-L">LAGRANGE</span></th>
+      <th><span class="cmp-badge badge-N">NEWTON</span></th>
+      <th><span class="cmp-badge badge-S">SPLINE</span></th>
+      <th>Δ L-S</th>
+      <th>TIPO</th>
+    </tr></thead><tbody>`;
+
+  testDays.forEach(day => {
+    const vL = lagrange(pts, day), vN = newton(pts, day), vS = evalSpline(segs, day);
+    const delta = Math.abs(vL - vS);
+    const isKnown = pts.some(p => Math.abs(p.x - day) < 0.01);
+    const type = isKnown
+      ? '<span class="cmp-badge badge-S">Dato real</span>'
+      : '<span class="cmp-badge badge-N">Interpolado</span>';
+    html += `<tr>
+      <td style="font-family:var(--font-mono);color:var(--accent)">${day}</td>
+      <td style="font-family:var(--font-mono)">${vL.toFixed(4)}</td>
+      <td style="font-family:var(--font-mono)">${vN.toFixed(4)}</td>
+      <td style="font-family:var(--font-mono)">${vS.toFixed(4)}</td>
+      <td style="font-family:var(--font-mono);color:${delta > 0.5 ? 'var(--accent3)' : 'var(--accent4)'}">${delta.toFixed(4)}</td>
+      <td>${type}</td>
+    </tr>`;
+  });
+
+  html += '</tbody></table>';
+  document.getElementById('compTableWrap').innerHTML = html;
+}
+
+function drawChart(pts, dd, segs) {
+  drawChartWithQuery(pts, segs, null);
+}
+
+function drawChartWithQuery(pts, segs, queryX = null) {
+  const canvas = document.getElementById('mainChart');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.parentElement.clientWidth;
+  const H = 360;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  ctx.scale(dpr, dpr);
+
+  const xMin = pts[0].x, xMax = pts[pts.length-1].x;
+  const xPad = (xMax-xMin) * 0.08;
+  const allY = pts.map(p => p.y);
+  const nSamples = 300;
+  const xs = Array.from({length: nSamples}, (_,i) => xMin - xPad + i*(xMax-xMin+2*xPad)/(nSamples-1));
+  const yL = xs.map(x => lagrange(pts, x));
+  const yN = xs.map(x => newton(pts, x));
+  const yS = xs.map(x => evalSpline(segs, x));
+
+  const yDataRange = Math.max(...allY) - Math.min(...allY);
+  const yClampMax = Math.max(...allY) + yDataRange * 0.7;
+  const yClampMin = Math.min(...allY) - yDataRange * 0.5;
+
+  const yAll = [
+    ...allY,
+    ...yL.filter(v => v > yClampMin && v < yClampMax),
+    ...yS.filter(v => v > yClampMin && v < yClampMax),
+  ];
+  const yMin = Math.min(...yAll), yMax = Math.max(...yAll);
+  const yPad = (yMax-yMin) * 0.15;
+
+  const ml = 55, mr = 20, mt = 20, mb = 45;
+  const pw = W - ml - mr, ph = H - mt - mb;
+
+  const toCanvasX = x => ml + (x - (xMin-xPad)) / (xMax-xMin+2*xPad) * pw;
+  const toCanvasY = y => mt + ph - (y - (yMin-yPad)) / (yMax-yMin+2*yPad) * ph;
+
+  ctx.fillStyle = '#0d0f14';
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.strokeStyle = 'rgba(42,47,64,0.8)';
+  ctx.lineWidth = 1;
+  const yTicks = 6;
+  for (let i = 0; i <= yTicks; i++) {
+    const yVal = yMin-yPad + i*(yMax-yMin+2*yPad)/yTicks;
+    const cy = toCanvasY(yVal);
+    ctx.beginPath(); ctx.moveTo(ml, cy); ctx.lineTo(W-mr, cy); ctx.stroke();
+    ctx.fillStyle = '#7a80a0';
+    ctx.font = `300 10px 'JetBrains Mono', monospace`;
+    ctx.fillText(yVal.toFixed(1), 5, cy+3);
+  }
+  const xTicks = Math.min(pts.length, 8);
+  for (let i = 0; i <= xTicks; i++) {
+    const xVal = xMin + i*(xMax-xMin)/xTicks;
+    const cx = toCanvasX(xVal);
+    ctx.beginPath(); ctx.moveTo(cx, mt); ctx.lineTo(cx, H-mb); ctx.stroke();
+    ctx.fillStyle = '#7a80a0';
+    ctx.font = `300 10px 'JetBrains Mono', monospace`;
+    ctx.fillText('d'+xVal.toFixed(0), cx-10, H-mb+14);
+  }
+
+  ctx.fillStyle = '#3d4260';
+  ctx.font = `400 10px 'JetBrains Mono', monospace`;
+  ctx.fillText('Bs', 5, mt-6);
+  ctx.fillText('Día', W-mr-15, H-mb+30);
+
+  const drawLine = (ys, color, dash=[]) => {
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.setLineDash(dash);
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 6;
+    ctx.beginPath();
+    let started = false;
+    xs.forEach((x, i) => {
+      const y = ys[i];
+      if (y < yClampMin || y > yClampMax) { started = false; return; }
+      const cx = toCanvasX(x), cy = toCanvasY(y);
+      if (!started) { ctx.moveTo(cx, cy); started = true; }
+      else ctx.lineTo(cx, cy);
+    });
+    ctx.stroke();
+    ctx.restore();
+  };
+
+  if (visibleMethods.newton)   drawLine(yN, '#5b9bd5', [6,3]);
+  if (visibleMethods.lagrange) drawLine(yL, '#e8c547', []);
+  if (visibleMethods.spline)   drawLine(yS, '#5bcfa8', [3,3]);
+
+  if (queryX !== null) {
+    const cx = toCanvasX(queryX);
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(cx, mt); ctx.lineTo(cx, H-mb); ctx.stroke();
+    ctx.restore();
+    const dotColors = ['#e8c547','#5b9bd5','#5bcfa8'];
+    const dotVals = [lagrange(pts,queryX), newton(pts,queryX), evalSpline(segs,queryX)];
+    const methods = ['lagrange','newton','spline'];
+    dotColors.forEach((col, i) => {
+      if (!visibleMethods[methods[i]]) return;
+      const v = dotVals[i];
+      if (v < yClampMin || v > yClampMax) return;
+      const cy = toCanvasY(v);
+      ctx.beginPath();
+      ctx.arc(cx, cy, 5, 0, Math.PI*2);
+      ctx.fillStyle = col; ctx.fill();
+      ctx.strokeStyle = '#0d0f14'; ctx.lineWidth = 2; ctx.stroke();
+    });
+  }
+
+  pts.forEach(pt => {
+    const cx = toCanvasX(pt.x), cy = toCanvasY(pt.y);
+    ctx.beginPath(); ctx.arc(cx, cy, 5, 0, Math.PI*2);
+    ctx.fillStyle = '#fff'; ctx.fill();
+    ctx.strokeStyle = '#0d0f14'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = '#e8eaf2';
+    ctx.font = `500 10px 'JetBrains Mono', monospace`;
+    ctx.fillText(pt.y+'Bs', cx+8, cy-4);
+  });
+
+  canvas._drawParams = { toCanvasX, toCanvasY, pts, xMin, xMax, xPad, yClampMin, yClampMax, segs };
+}
+
+const chartCanvas = document.getElementById('mainChart');
+const tooltip = document.getElementById('tooltip');
+chartCanvas.addEventListener('mousemove', function(e) {
+  if (!chartCanvas._drawParams || !currentPts.length) return;
+  const {toCanvasX, toCanvasY, pts, xMin, xMax, xPad, yClampMin, yClampMax, segs} = chartCanvas._drawParams;
+  const rect = chartCanvas.getBoundingClientRect();
+  const mouseX = e.clientX - rect.left;
+  const W = parseFloat(chartCanvas.style.width);
+  const ml = 55, mr = 20;
+  const pw = W - ml - mr;
+  if (mouseX < ml || mouseX > W-mr) { tooltip.style.opacity = 0; return; }
+  const fraction = (mouseX - ml) / pw;
+  const xRange = xMax - xMin + 2*xPad;
+  const xVal = (xMin - xPad) + fraction * xRange;
+  if (xVal < pts[0].x - xPad || xVal > pts[pts.length-1].x + xPad) { tooltip.style.opacity = 0; return; }
+
+  const vL = lagrange(pts, xVal), vN = newton(pts, xVal), vS = evalSpline(segs, xVal);
+  const fmt = v => (v < yClampMin || v > yClampMax) ? '(fuera)' : v.toFixed(3)+' Bs';
+
+  tooltip.innerHTML = `
+    <div class="t-day">Día ${xVal.toFixed(2)}</div>
+    <div class="t-row"><div class="t-dot" style="background:var(--lagrange)"></div>
+      <span>Lagrange:</span><span class="t-val" style="color:var(--lagrange)">${fmt(vL)}</span></div>
+    <div class="t-row"><div class="t-dot" style="background:var(--newton)"></div>
+      <span>Newton:</span><span class="t-val" style="color:var(--newton)">${fmt(vN)}</span></div>
+    <div class="t-row"><div class="t-dot" style="background:var(--spline)"></div>
+      <span>Spline:</span><span class="t-val" style="color:var(--spline)">${fmt(vS)}</span></div>
+  `;
+  const tipW = 190;
+  let left = mouseX + 12;
+  if (left + tipW > W) left = mouseX - tipW - 12;
+  tooltip.style.left = left + 'px';
+  tooltip.style.top = (e.clientY - rect.top - 40) + 'px';
+  tooltip.style.opacity = 1;
+});
+chartCanvas.addEventListener('mouseleave', () => { tooltip.style.opacity = 0; });
+
+function openTab(id, btn) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+
+function toggleMethod(method, btn) {
+  visibleMethods[method] = !visibleMethods[method];
+  btn.classList.toggle('on', visibleMethods[method]);
+  const tagMap = { lagrange: 'tagL', newton: 'tagN', spline: 'tagS' };
+  document.getElementById(tagMap[method]).classList.toggle('active', visibleMethods[method]);
+  redraw();
+}
+
+function toggleLegend(method) {
+  const legMap = { lagrange: 'legL', newton: 'legN', spline: 'legS' };
+  visibleMethods[method] = !visibleMethods[method];
+  document.getElementById(legMap[method]).classList.toggle('active', visibleMethods[method]);
+  const pillMap = { lagrange: 0, newton: 1, spline: 2 };
+  const pills = document.querySelectorAll('.method-pill');
+  if (pills[pillMap[method]]) pills[pillMap[method]].classList.toggle('on', visibleMethods[method]);
+  redraw();
+}
+
+function redraw() {
+  if (currentPts.length < 2) return;
+  const segs = buildCubicSplines(currentPts);
+  drawChartWithQuery(currentPts, segs, lastQueryDay);
+}
+
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(redraw, 150);
+});
+
+window.addEventListener('load', init);
+</script>
+</body>
+</html>

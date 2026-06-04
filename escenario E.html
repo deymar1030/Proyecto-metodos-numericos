@@ -1,0 +1,2472 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UmbralSolver — Raíces de Ecuaciones · Escenario E</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&family=Orbitron:wght@400;700;900&family=DM+Serif+Display:ital@0;1&display=swap"
+    rel="stylesheet">
+
+  <style>
+    /* ═══════════════════════════════════════════════════════════════════
+   UMBRALSOLVER — RAÍCES DE ECUACIONES · ESCENARIO E
+   DISEÑO: Paleta InterpCalc (Acento Amarillo/Dorado)
+   ═══════════════════════════════════════════════════════════════════ */
+
+    @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap');
+
+    /* ═══════════════════════════════════════════════════════════════════
+   TOKENS — Paleta del sistema (Inspirada en InterpCalc)
+═══════════════════════════════════════════════════════════════════ */
+    :root {
+      /* Base — Fondos oscuros */
+      --bg: #0d0f14;
+      --surface: #13161e;
+      --surface2: #1a1e2a;
+      --surface3: #222736;
+      --border: #2a2f40;
+      --border-glow: #3d4260;
+
+      /* Acentos principales (amarillo/dorado como primario) */
+      --accent: #e8c547;
+      --accent-dim: #c4a132;
+      --accent-glow: rgba(232, 197, 71, 0.12);
+
+      /* Acentos secundarios */
+      --accent2: #5b9bd5;
+      --accent3: #e05a5a;
+      --accent4: #5bcfa8;
+
+      /* Métodos numéricos */
+      --bisec: #e8c547;
+      --newton: #5b9bd5;
+      --secant: #5bcfa8;
+
+      /* Tipografía */
+      --text: #e8eaf2;
+      --text-muted: #7a80a0;
+      --text-dim: #3d4260;
+
+      /* Fuentes */
+      --font-display: 'Syne', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --font-serif: 'Libre Baskerville', serif;
+
+      /* Espaciado */
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-display);
+      font-weight: 400;
+      line-height: 1.5;
+      min-height: 100vh;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+   HEADER — Cabecera tipo InterpCalc
+═══════════════════════════════════════════════════════════════════ */
+    header {
+      border-bottom: 1px solid var(--border);
+      background: rgba(13, 15, 20, 0.85);
+      backdrop-filter: blur(16px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-inner {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 0.6rem 2rem;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 2rem;
+    }
+
+    .logo {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .logo-main {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 1.5rem;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      color: var(--text);
+    }
+
+    .logo-main strong {
+      color: var(--accent);
+    }
+
+    .logo-sub {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .header-center {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .scenario-tabs {
+      display: flex;
+      gap: 1px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+
+    .sc-tab {
+      padding: 0.5rem 1.2rem;
+      background: transparent;
+      border: none;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: var(--transition);
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    .sc-tab.active {
+      background: var(--accent);
+      color: #000;
+      font-weight: 600;
+    }
+
+    .sc-tab:hover:not(.active) {
+      color: var(--text);
+      background: var(--surface2);
+    }
+
+    .header-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 0.4rem;
+    }
+
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.03em;
+      color: var(--text-muted);
+    }
+
+    .blink {
+      animation: blink 1.2s step-end infinite;
+    }
+
+    @keyframes blink {
+      50% {
+        opacity: 0;
+      }
+    }
+
+    .dot-live {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent4);
+    }
+
+    .method-pills {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .mp {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      padding: 4px 12px;
+      border-radius: var(--radius-sm);
+      border: 1px solid;
+      background: transparent;
+      cursor: pointer;
+      transition: var(--transition);
+      letter-spacing: 0.02em;
+    }
+
+    .mp.bisec {
+      color: var(--bisec);
+      border-color: var(--bisec);
+    }
+
+    .mp.newton {
+      color: var(--newton);
+      border-color: var(--newton);
+    }
+
+    .mp.secant {
+      color: var(--secant);
+      border-color: var(--secant);
+    }
+
+    .mp.on.bisec {
+      background: var(--bisec);
+      color: #000;
+    }
+
+    .mp.on.newton {
+      background: var(--newton);
+      color: #fff;
+    }
+
+    .mp.on.secant {
+      background: var(--secant);
+      color: #000;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+   WORKSPACE — Layout principal
+═══════════════════════════════════════════════════════════════════ */
+    .workspace {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 1.5rem 2rem 3rem;
+    }
+
+    .scenario-pane {
+      display: none;
+    }
+
+    .scenario-pane.active {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 1.5rem;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+   PANELES — Estilo InterpCalc
+═══════════════════════════════════════════════════════════════════ */
+    .pnl {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      transition: var(--transition);
+    }
+
+    .pnl+.pnl {
+      margin-top: 1rem;
+    }
+
+    .pnl-h {
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      padding: 0.7rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .pnl-h h3 {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .pnl-icon {
+      font-size: 1rem;
+    }
+
+    .pnl-badge {
+      margin-left: auto;
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      font-weight: 500;
+      padding: 2px 10px;
+      background: var(--surface3);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+    }
+
+    .pnl-b {
+      padding: 1rem;
+    }
+
+    /* Función display */
+    .fn-display {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.85rem 1rem;
+      margin-bottom: 1rem;
+      border-left: 3px solid var(--accent);
+    }
+
+    .fn-display .fn-label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.4rem;
+    }
+
+    .fn-display .fn-eq {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: var(--accent);
+      word-break: break-all;
+    }
+
+    .fn-display .fn-var {
+      color: var(--accent2);
+    }
+
+    .fn-display .fn-cst {
+      color: var(--accent4);
+    }
+
+    /* Parameter grid */
+    .pg {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .pg.three {
+      grid-template-columns: 1fr 1fr 1fr;
+    }
+
+    .pf {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .pl {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .pi {
+      padding: 0.55rem 0.75rem;
+      background: var(--surface3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      outline: none;
+      transition: var(--transition);
+      width: 100%;
+    }
+
+    .pi:focus {
+      border-color: var(--accent);
+    }
+
+    /* Run button — estilo acento amarillo */
+    .run-btn {
+      width: 100%;
+      padding: 0.75rem;
+      border: none;
+      border-radius: var(--radius-md);
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.9rem;
+      letter-spacing: 0.03em;
+      cursor: pointer;
+      transition: var(--transition);
+      background: var(--accent);
+      color: #000;
+    }
+
+    .run-btn:hover {
+      background: var(--accent-dim);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px var(--accent-glow);
+    }
+
+    .run-btn:active {
+      transform: translateY(0);
+    }
+
+    /* Root cards */
+    .root-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      margin-top: 1rem;
+    }
+
+    .root-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.7rem 1rem;
+      border-left: 3px solid transparent;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 0.5rem;
+      align-items: start;
+      transition: var(--transition);
+    }
+
+    .root-card.bisec {
+      border-left-color: var(--bisec);
+    }
+
+    .root-card.newton {
+      border-left-color: var(--newton);
+    }
+
+    .root-card.secant {
+      border-left-color: var(--secant);
+    }
+
+    .rc-name {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 0.25rem;
+    }
+
+    .rc-root {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 1.1rem;
+    }
+
+    .rc-root.green {
+      color: var(--bisec);
+    }
+
+    .rc-root.amber {
+      color: var(--newton);
+    }
+
+    .rc-root.blue {
+      color: var(--secant);
+    }
+
+    .rc-meta {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      margin-top: 0.2rem;
+    }
+
+    .rc-iter {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      text-align: right;
+    }
+
+    .rc-iter span {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: var(--accent);
+      display: block;
+    }
+
+    .converge-bar {
+      height: 2px;
+      background: var(--surface3);
+      border-radius: 1px;
+      margin-top: 0.5rem;
+      overflow: hidden;
+    }
+
+    .converge-fill {
+      height: 100%;
+      border-radius: 1px;
+      transition: width 0.6s ease;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+   CHART PANEL
+═══════════════════════════════════════════════════════════════════ */
+    .chart-pnl {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      width: 100%;
+      min-height: 360px;
+    }
+
+    .chart-pnl > div[style*="position:relative"] {
+      width: 100%;
+      display: block;
+    }
+
+    .chart-tb {
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      padding: 0.7rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .chart-tb-title {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.75rem;
+      color: var(--accent);
+      letter-spacing: -0.01em;
+    }
+
+    .chart-leg {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .cleg {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer;
+      opacity: 0.5;
+      transition: opacity 0.2s;
+    }
+
+    .cleg.on {
+      opacity: 1;
+    }
+
+    .cleg-line {
+      width: 16px;
+      height: 2px;
+      border-radius: 1px;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      background: var(--bg);
+    }
+
+    canvas[height] {
+      height: auto;
+    }
+
+    /* Tooltip estilo InterpCalc */
+    .tip3 {
+      position: absolute;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.5rem 0.75rem;
+      pointer-events: none;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      z-index: 50;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(8px);
+      min-width: 150px;
+      display: none;
+    }
+
+    .t-x {
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      font-size: 0.65rem;
+      letter-spacing: 0.02em;
+    }
+
+    .t-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: 2px 0;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+   TABS — Pestañas estilo InterpCalc
+═══════════════════════════════════════════════════════════════════ */
+    .tabs-w {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .tabs-b {
+      display: flex;
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      overflow-x: auto;
+    }
+
+    .tb {
+      flex-shrink: 0;
+      padding: 0.6rem 1rem;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: var(--transition);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .tb.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .tb:hover:not(.active) {
+      color: var(--text);
+      background: rgba(232, 197, 71, 0.05);
+    }
+
+    .tc {
+      padding: 1.2rem;
+      display: none;
+    }
+
+    .tc.active {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(4px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Tablas de iteraciones */
+    .iter-tbl {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+    }
+
+    .iter-tbl th {
+      background: var(--surface3);
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      font-size: 0.65rem;
+      text-align: left;
+    }
+
+    .iter-tbl td {
+      padding: 0.45rem 0.75rem;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    .iter-tbl tr:hover td {
+      background: var(--surface2);
+    }
+
+    .err-cell {
+      font-family: var(--font-mono);
+      font-weight: 500;
+    }
+
+    .err-cell.converged {
+      color: var(--accent4);
+    }
+
+    .err-cell.near {
+      color: var(--accent);
+    }
+
+    .err-cell.far {
+      color: var(--accent3);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+   ORDEN Y COMPARATIVA
+═══════════════════════════════════════════════════════════════════ */
+    .order-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
+
+    .order-box {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 1rem;
+      text-align: center;
+      border-top: 2px solid transparent;
+      transition: var(--transition);
+    }
+
+    .order-box.bisec {
+      border-top-color: var(--bisec);
+    }
+
+    .order-box.newton {
+      border-top-color: var(--newton);
+    }
+
+    .order-box.secant {
+      border-top-color: var(--secant);
+    }
+
+    .ob-name {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+
+    .ob-order {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 1.5rem;
+      margin-bottom: 0.35rem;
+    }
+
+    .ob-theory {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .best-tag {
+      display: inline-block;
+      padding: 2px 10px;
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      font-weight: 700;
+      background: var(--accent4);
+      color: #000;
+      border-radius: 100px;
+      letter-spacing: 0.05em;
+      margin-top: 0.5rem;
+    }
+
+    /* Tabla comparativa */
+    .cmp-tbl {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+    }
+
+    .cmp-tbl th {
+      background: var(--surface2);
+      padding: 0.6rem 0.8rem;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-align: left;
+      text-transform: uppercase;
+      font-size: 0.65rem;
+    }
+
+    .cmp-tbl td {
+      padding: 0.5rem 0.8rem;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    .cmp-tbl tr:hover td {
+      background: var(--surface2);
+    }
+
+    /* Interpretación */
+    .interp-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      border-left: 3px solid var(--accent);
+      padding: 1rem;
+    }
+
+    .ic-q {
+      font-family: var(--font-serif);
+      font-style: italic;
+      font-size: 0.8rem;
+      color: var(--accent);
+      margin-bottom: 0.5rem;
+    }
+
+    .ic-a {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .ic-a strong {
+      color: var(--accent);
+    }
+
+    /* Empty state */
+    .empty-state {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-align: center;
+      padding: 1.5rem 0;
+      font-style: italic;
+    }
+
+    .terminal-line {
+      color: var(--accent-dim);
+    }
+
+    .terminal-line::before {
+      content: '> ';
+      color: var(--accent);
+    }
+
+    /* Right column */
+    .right-col {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+   MODAL — Contexto (estilo InterpCalc)
+═══════════════════════════════════════════════════════════════════ */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      background: rgba(13, 15, 20, 0.92);
+      backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .modal-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      max-width: 800px;
+      width: 100%;
+      max-height: 88vh;
+      overflow-y: auto;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      transform: translateY(16px);
+      transition: transform 0.25s ease;
+    }
+
+    .modal-overlay.open .modal-box {
+      transform: translateY(0);
+    }
+
+    .modal-head {
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    .modal-title {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 1rem;
+      letter-spacing: -0.01em;
+      color: var(--accent);
+    }
+
+    .modal-close {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      cursor: pointer;
+      width: 32px;
+      height: 32px;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+    }
+
+    .modal-close:hover {
+      border-color: var(--accent3);
+      color: var(--accent3);
+    }
+
+    .modal-body {
+      padding: 1.5rem;
+    }
+
+    .modal-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .modal-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .ms-label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .ms-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .ms-title {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+    }
+
+    .ms-text {
+      font-family: var(--font-serif);
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.7;
+    }
+
+    .ms-text strong {
+      color: var(--accent);
+    }
+
+    .model-block {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.85rem 1rem;
+      margin-bottom: 0.75rem;
+      border-left: 3px solid var(--accent);
+    }
+
+    .model-block.b {
+      border-left-color: var(--accent2);
+    }
+
+    .model-block.c {
+      border-left-color: var(--accent4);
+    }
+
+    .model-tag {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 0.35rem;
+    }
+
+    .model-fn {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--accent);
+      margin-bottom: 0.35rem;
+      word-break: break-all;
+    }
+
+    .model-block.b .model-fn {
+      color: var(--accent2);
+    }
+
+    .model-block.c .model-fn {
+      color: var(--accent4);
+    }
+
+    .model-desc {
+      font-family: var(--font-serif);
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .methods-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+    }
+
+    .meth-box {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.75rem;
+      border-top: 2px solid transparent;
+    }
+
+    .meth-box.bisec-box {
+      border-top-color: var(--bisec);
+    }
+
+    .meth-box.newton-box {
+      border-top-color: var(--newton);
+    }
+
+    .meth-box.secant-box {
+      border-top-color: var(--secant);
+    }
+
+    .meth-name {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 700;
+      margin-bottom: 0.35rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .meth-box.bisec-box .meth-name {
+      color: var(--bisec);
+    }
+
+    .meth-box.newton-box .meth-name {
+      color: var(--newton);
+    }
+
+    .meth-box.secant-box .meth-name {
+      color: var(--secant);
+    }
+
+    .meth-detail {
+      font-family: var(--font-serif);
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .questions-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .questions-list li {
+      font-family: var(--font-serif);
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      padding: 0.5rem 0.75rem;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-left: 2px solid var(--accent);
+      line-height: 1.6;
+    }
+
+    .questions-list li::before {
+      content: '◆ ';
+      color: var(--accent);
+      font-size: 0.7rem;
+    }
+
+    /* Info button */
+    .info-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 0.9rem;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .info-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-glow);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+   SCROLLBAR & UTILITIES
+═══════════════════════════════════════════════════════════════════ */
+    ::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--surface3);
+      border-radius: 2px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--border-glow);
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .fu {
+      animation: fadeUp 0.3s ease forwards;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════════════════════════════ */
+    @media (max-width: 960px) {
+      .scenario-pane.active {
+        grid-template-columns: 1fr;
+      }
+
+      .order-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .methods-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .header-inner {
+        grid-template-columns: 1fr;
+        text-align: center;
+        gap: 0.75rem;
+      }
+
+      .header-left,
+      .header-right {
+        text-align: center;
+        align-items: center;
+      }
+
+      .method-pills {
+        justify-content: center;
+      }
+
+      .status-row {
+        justify-content: center;
+      }
+
+      .pg {
+        grid-template-columns: 1fr;
+      }
+
+      .pg.three {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Ocultar título del escenario (se muestra en el navbar) */
+    header,
+    .header-inner {
+      display: none !important;
+    }
+  </style>
+
+</head>
+
+<body>
+
+  <!-- HEADER -->
+  <header>
+    <div class="header-inner">
+      <div class="logo">
+        <div class="logo-main">UmbralSolver</div>
+        <div class="logo-sub">Escenario E — Umbrales críticos · Raíces de ecuaciones</div>
+      </div>
+      <div class="header-center">
+        <div class="scenario-tabs">
+          <button class="sc-tab active" onclick="switchScenario('A',this)">⚡ COSTO/INGRESO</button>
+          <button class="sc-tab" onclick="switchScenario('B',this)">⛽ CARBURANTE</button>
+          <button class="sc-tab" onclick="switchScenario('C',this)">👥 OPINIÓN SOCIAL</button>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="status-row">
+          <div class="dot-live blink"></div>
+          <span id="statusTxt">SISTEMA EN ESPERA</span>
+          <button class="info-btn" onclick="openModal()">? CONTEXTO</button>
+        </div>
+        <div class="method-pills">
+          <button class="mp bisec on" onclick="toggleM('bisec',this)">BISECCIÓN</button>
+          <button class="mp newton on" onclick="toggleM('newton',this)">NEWTON-R</button>
+          <button class="mp secant on" onclick="toggleM('secant',this)">SECANTE</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="workspace">
+
+    <!-- ══════════════════════════
+     SCENARIO A: COSTO/INGRESO
+═══════════════════════════════ -->
+    <div class="scenario-pane active" id="scA">
+      <aside>
+        <div class="pnl">
+          <div class="pnl-h"><span class="pnl-icon">⚡</span>
+            <h3>Modelo: Costo vs Ingreso</h3><span class="pnl-badge">ESCENARIO A</span>
+          </div>
+          <div class="pnl-b">
+            <div class="fn-display">
+              <div class="fn-label">// función a resolver: f(t) = 0</div>
+              <div class="fn-eq">f(t) = <span class="fn-var">C₀</span>·(1+<span class="fn-var">r</span>)^t + <span
+                  class="fn-var">F</span>·t − <span class="fn-var">I</span></div>
+              <div style="margin-top:0.4rem;font-size:0.62rem;color:var(--muted)">C₀=costo inicial/día · r=tasa diaria ·
+                F=gasto fijo · I=ingreso mensual</div>
+            </div>
+            <div class="pg">
+              <div class="pf">
+                <div class="pl">C₀ — costo/día inicial (Bs)</div><input class="pi" id="aC0" type="number" value="25"
+                  step="0.5">
+              </div>
+              <div class="pf">
+                <div class="pl">r — tasa incremento diario</div><input class="pi" id="aR" type="number" value="0.02"
+                  step="0.001">
+              </div>
+              <div class="pf">
+                <div class="pl">F — gasto fijo mensual (Bs)</div><input class="pi" id="aF" type="number" value="400"
+                  step="10">
+              </div>
+              <div class="pf">
+                <div class="pl">I — ingreso familiar (Bs)</div><input class="pi" id="aI" type="number" value="2500"
+                  step="50">
+              </div>
+            </div>
+            <div class="pg three">
+              <div class="pf">
+                <div class="pl">Tol. convergencia</div><input class="pi" id="aTol" type="number" value="1e-8"
+                  step="1e-10">
+              </div>
+              <div class="pf">
+                <div class="pl">Máx. iteraciones</div><input class="pi" id="aMaxIt" type="number" value="100" step="10">
+              </div>
+              <div class="pf">
+                <div class="pl">Intervalo [a,b]</div><input class="pi" id="aAB" type="text" value="1,200">
+              </div>
+            </div>
+            <button class="run-btn" onclick="runScenario('A')">▶ DETECTAR UMBRAL</button>
+            <div class="root-cards" id="aRootCards">
+              <div class="empty-state terminal-line">aguardando parámetros...</div>
+            </div>
+          </div>
+        </div>
+      </aside>
+      <div class="right-col">
+        <div class="chart-pnl glow">
+          <div class="chart-tb">
+            <div class="chart-tb-title">f(t) — UMBRAL DE COSTO ACUMULADO</div>
+            <div class="chart-leg">
+              <div class="cleg on" id="aLegB" onclick="toggleLeg('A','bisec')">
+                <div class="cleg-line" style="background:var(--bisec)"></div><span>Bisección</span>
+              </div>
+              <div class="cleg on" id="aLegN" onclick="toggleLeg('A','newton')">
+                <div class="cleg-line" style="background:var(--newton)"></div><span>Newton-R</span>
+              </div>
+              <div class="cleg on" id="aLegS" onclick="toggleLeg('A','secant')">
+                <div class="cleg-line" style="background:var(--secant)"></div><span>Secante</span>
+              </div>
+            </div>
+          </div>
+          <div style="position:relative">
+            <canvas id="aChart" height="300"></canvas>
+            <div class="tip3" id="aTip"></div>
+          </div>
+        </div>
+        <div class="tabs-w">
+          <div class="tabs-b">
+            <button class="tb active" onclick="openTab('aTabs','aT1',this)">ITERACIONES</button>
+            <button class="tb" onclick="openTab('aTabs','aT2',this)">CONVERGENCIA</button>
+            <button class="tb" onclick="openTab('aTabs','aT3',this)">ORDEN ESTIMADO</button>
+            <button class="tb" onclick="openTab('aTabs','aT4',this)">COMPARATIVA</button>
+            <button class="tb" onclick="openTab('aTabs','aT5',this)">INTERPRETACIÓN</button>
+          </div>
+          <div id="aTabs">
+            <div class="tc active" id="aT1">
+              <div class="empty-state terminal-line">sin calcular</div>
+            </div>
+            <div class="tc" id="aT2"><canvas id="aConvChart" height="260" style="background:var(--bg)"></canvas></div>
+            <div class="tc" id="aT3">
+              <div class="empty-state terminal-line">sin calcular</div>
+            </div>
+            <div class="tc" id="aT4">
+              <div class="interp-card">
+                <div class="ic-q">¿En qué día el costo acumulado supera el ingreso familiar?</div>
+                <div class="ic-a">El umbral crítico se alcanza en el día <strong id="aInterpRoot">—</strong>. 
+                A partir de ese momento, la familia ha gastado más de lo que recibe mensualmente (Bs <span id="aInterpI">—</span>).
+                Con una tasa de incremento diario de <span id="aInterpRate">—</span>%, el costo crece exponencialmente;
+                reducir esta tasa o aumentar el ingreso desplaza el umbral hacia adelante.</div>
+              </div>
+              <div class="interp-card" style="border-left-color:var(--cyan);margin-top:0.6rem">
+                <div class="ic-q">Comparación de robustez y convergencia</div>
+                <div class="ic-a">Bisección es el más <strong>robusto</strong> (requiere solo cambio de signo).
+                Newton-Raphson es el más <strong>veloz</strong> (converge en ~<span id="aInterpIterN">—</span> iteraciones vs ~<span id="aInterpIterB">—</span> de Bisección) 
+                pero falla si f'(x)≈0. La Secante es un compromiso: no necesita derivada analítica y converge 
+                a orden ~1.618 (razón áurea).</div>
+              </div>
+            </div>
+            <div class="tc" id="aT5">
+              <div class="empty-state terminal-line">sin calcular</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════
+     SCENARIO B: CARBURANTE
+═══════════════════════════════ -->
+    <div class="scenario-pane" id="scB">
+      <aside>
+        <div class="pnl">
+          <div class="pnl-h"><span class="pnl-icon">⛽</span>
+            <h3>Modelo: Tasa reposición carburante</h3><span class="pnl-badge">ESCENARIO B</span>
+          </div>
+          <div class="pnl-b">
+            <div class="fn-display" style="border-left-color:var(--amber)">
+              <div class="fn-label">// tasa llegada = tasa consumo: f(λ) = 0</div>
+              <div class="fn-eq" style="color:var(--amber)">f(λ) = <span class="fn-var">D</span>·λ/(λ+<span
+                  class="fn-var">μ</span>) − <span class="fn-var">C</span>·e^(−<span class="fn-var">k</span>·λ) − <span
+                  class="fn-var">Q</span></div>
+              <div style="margin-top:0.4rem;font-size:0.62rem;color:var(--muted)">λ=tasa reposición · D=demanda máx ·
+                μ=saturación · C=consumo crítico · k=decaimiento · Q=umbral</div>
+            </div>
+            <div class="pg">
+              <div class="pf">
+                <div class="pl">D — demanda máxima</div><input class="pi" id="bD" type="number" value="100" step="1">
+              </div>
+              <div class="pf">
+                <div class="pl">μ — saturación</div><input class="pi" id="bMu" type="number" value="50" step="1">
+              </div>
+              <div class="pf">
+                <div class="pl">C — consumo crítico</div><input class="pi" id="bC" type="number" value="30" step="1">
+              </div>
+              <div class="pf">
+                <div class="pl">k — decaimiento</div><input class="pi" id="bK" type="number" value="0.05" step="0.01">
+              </div>
+              <div class="pf">
+                <div class="pl">Q — umbral de equilibrio</div><input class="pi" id="bQ" type="number" value="40"
+                  step="1">
+              </div>
+            </div>
+            <div class="pg three">
+              <div class="pf">
+                <div class="pl">Tolerancia</div><input class="pi" id="bTol" type="number" value="1e-8">
+              </div>
+              <div class="pf">
+                <div class="pl">Máx. iter.</div><input class="pi" id="bMaxIt" type="number" value="100">
+              </div>
+              <div class="pf">
+                <div class="pl">Intervalo [a,b]</div><input class="pi" id="bAB" type="text" value="0.1,200">
+              </div>
+            </div>
+            <button class="run-btn"
+              style="background:rgba(240,165,0,0.1);color:var(--amber);border-color:var(--amber-dim)"
+              onclick="runScenario('B')">▶ DETECTAR TASA CRÍTICA</button>
+            <div class="root-cards" id="bRootCards">
+              <div class="empty-state terminal-line">aguardando parámetros...</div>
+            </div>
+          </div>
+        </div>
+      </aside>
+      <div class="right-col">
+        <div class="chart-pnl" style="border-color:var(--amber-dim)">
+          <div class="chart-tb">
+            <div class="chart-tb-title" style="color:var(--amber)">f(λ) — TASA CRÍTICA DE REPOSICIÓN</div>
+            <div class="chart-leg">
+              <div class="cleg on" id="bLegB" onclick="toggleLeg('B','bisec')">
+                <div class="cleg-line" style="background:var(--bisec)"></div><span>Bisección</span>
+              </div>
+              <div class="cleg on" id="bLegN" onclick="toggleLeg('B','newton')">
+                <div class="cleg-line" style="background:var(--newton)"></div><span>Newton-R</span>
+              </div>
+              <div class="cleg on" id="bLegS" onclick="toggleLeg('B','secant')">
+                <div class="cleg-line" style="background:var(--secant)"></div><span>Secante</span>
+              </div>
+            </div>
+          </div>
+          <div style="position:relative">
+            <canvas id="bChart" height="300"></canvas>
+            <div class="tip3" id="bTip"></div>
+          </div>
+        </div>
+        <div class="tabs-w" style="border-color:var(--amber-dim)">
+          <div class="tabs-b">
+            <button class="tb active" onclick="openTab('bTabs','bT1',this)">ITERACIONES</button>
+            <button class="tb" onclick="openTab('bTabs','bT2',this)">CONVERGENCIA</button>
+            <button class="tb" onclick="openTab('bTabs','bT3',this)">ORDEN ESTIMADO</button>
+            <button class="tb" onclick="openTab('bTabs','bT4',this)">COMPARATIVA</button>
+            <button class="tb" onclick="openTab('bTabs','bT5',this)">INTERPRETACIÓN</button>
+          </div>
+          <div id="bTabs">
+            <div class="tc active" id="bT1">
+              <div class="empty-state terminal-line">sin calcular</div>
+            </div>
+            <div class="tc" id="bT2"><canvas id="bConvChart" height="260" style="background:var(--bg)"></canvas></div>
+            <div class="tc" id="bT3">
+              <div class="empty-state terminal-line">sin calcular</div>
+            </div>
+            <div class="tc" id="bT4">
+              <div class="empty-state terminal-line">sin calcular</div>
+            </div>
+            <div class="tc" id="bT5">
+              <div class="interp-card" style="border-left-color:var(--amber)">
+                <div class="ic-q">¿Cuál es la tasa de reposición crítica que iguala consumo y llegada?</div>
+                <div class="ic-a">La tasa crítica λ* = <strong id="bInterpRoot">—</strong> unidades/día es el equilibrio exacto.
+                Por debajo de este valor, el consumo supera la reposición → <strong style="color:var(--red)">desabastecimiento</strong>.
+                Por encima → exceso de inventario. El modelo captura la saturación logística de la demanda y el 
+                decaimiento exponencial del consumo con la disponibilidad.</div>
+              </div>
+              <div class="interp-card" style="border-left-color:var(--cyan);margin-top:0.6rem">
+                <div class="ic-q">Sensibilidad al punto inicial</div>
+                <div class="ic-a">Newton-Raphson (x₀=<span id="bInterpX0">—</span>) convergió en <strong id="bInterpIterN">—</strong> iteraciones.
+                Si f'(λ)≈0 (zona plana), Newton diverge. La Secante con dos puntos iniciales es más segura en esos casos.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════
+     SCENARIO C: OPINION SOCIAL
+═══════════════════════════════ -->
+    <div class="scenario-pane" id="scC">
+      <aside>
+        <div class="pnl">
+          <div class="pnl-h"><span class="pnl-icon">👥</span>
+            <h3>Modelo: Umbral opinión social</h3><span class="pnl-badge">ESCENARIO C</span>
+          </div>
+          <div class="pnl-b">
+            <div class="fn-display" style="border-left-color:var(--cyan)">
+              <div class="fn-label">// bifurcación social: f(p) = 0</div>
+              <div class="fn-eq" style="color:var(--cyan)">f(p) = <span class="fn-var">α</span>·p·(1−p) − <span
+                  class="fn-var">β</span>·(p−<span class="fn-var">p*</span>) − <span class="fn-var">γ</span>·tanh(<span
+                  class="fn-var">σ</span>·p)</div>
+              <div style="margin-top:0.4rem;font-size:0.62rem;color:var(--muted)">p=proporción adoptantes · α=tasa
+                difusión · β=resistencia · p*=umbral · γ=presión · σ=pendiente</div>
+            </div>
+            <div class="pg">
+              <div class="pf">
+                <div class="pl">α — tasa difusión</div><input class="pi" id="cAlpha" type="number" value="3.5"
+                  step="0.1">
+              </div>
+              <div class="pf">
+                <div class="pl">β — resistencia</div><input class="pi" id="cBeta" type="number" value="0.8" step="0.05">
+              </div>
+              <div class="pf">
+                <div class="pl">p* — umbral crítico</div><input class="pi" id="cPstar" type="number" value="0.3"
+                  step="0.01">
+              </div>
+              <div class="pf">
+                <div class="pl">γ — presión social</div><input class="pi" id="cGamma" type="number" value="0.5"
+                  step="0.05">
+              </div>
+              <div class="pf">
+                <div class="pl">σ — pendiente sigmoide</div><input class="pi" id="cSigma" type="number" value="5"
+                  step="0.5">
+              </div>
+            </div>
+            <div class="pg three">
+              <div class="pf">
+                <div class="pl">Tolerancia</div><input class="pi" id="cTol" type="number" value="1e-8">
+              </div>
+              <div class="pf">
+                <div class="pl">Máx. iter.</div><input class="pi" id="cMaxIt" type="number" value="100">
+              </div>
+              <div class="pf">
+                <div class="pl">Intervalo [a,b]</div><input class="pi" id="cAB" type="text" value="0.01,0.99">
+              </div>
+            </div>
+            <button class="run-btn"
+              style="background:rgba(0,184,217,0.1);color:var(--cyan);border-color:var(--cyan-dim)"
+              onclick="runScenario('C')">▶ DETECTAR BIFURCACIÓN</button>
+            <div class="root-cards" id="cRootCards">
+              <div class="empty-state terminal-line">aguardando parámetros...</div>
+            </div>
+          </div>
+        </div>
+      </aside>
+      <div class="right-col">
+        <div class="chart-pnl" style="border-color:var(--cyan-dim)">
+          <div class="chart-tb">
+            <div class="chart-tb-title" style="color:var(--cyan)">f(p) — BIFURCACIÓN SOCIAL (ESTABILIDAD → MASIFICACIÓN)
+            </div>
+            <div class="chart-leg">
+              <div class="cleg on" id="cLegB" onclick="toggleLeg('C','bisec')">
+                <div class="cleg-line" style="background:var(--bisec)"></div><span>Bisección</span>
+              </div>
+              <div class="cleg on" id="cLegN" onclick="toggleLeg('C','newton')">
+                <div class="cleg-line" style="background:var(--newton)"></div><span>Newton-R</span>
+              </div>
+              <div class="cleg on" id="cLegS" onclick="toggleLeg('C','secant')">
+                <div class="cleg-line" style="background:var(--secant)"></div><span>Secante</span>
+              </div>
+            </div>
+          </div>
+          <div style="position:relative">
+            <canvas id="cChart" height="300"></canvas>
+            <div class="tip3" id="cTip"></div>
+          </div>
+        </div>
+        <div class="tabs-w" style="border-color:var(--cyan-dim)">
+          <div class="tabs-b">
+            <button class="tb active" onclick="openTab('cTabs','cT1',this)">ITERACIONES</button>
+            <button class="tb" onclick="openTab('cTabs','cT2',this)">CONVERGENCIA</button>
+            <button class="tb" onclick="openTab('cTabs','cT3',this)">ORDEN ESTIMADO</button>
+            <button class="tb" onclick="openTab('cTabs','cT4',this)">COMPARATIVA</button>
+            <button class="tb" onclick="openTab('cTabs','cT5',this)">INTERPRETACIÓN</button>
+          </div>
+          <div id="cTabs">
+            <div class="tc active" id="cT1">
+              <div class="empty-state terminal-line">sin calcular</div>
+            </div>
+            <div class="tc" id="cT2"><canvas id="cConvChart" height="260" style="background:var(--bg)"></canvas></div>
+            <div class="tc" id="cT3">
+              <div class="empty-state terminal-line">sin calcular</div>
+            </div>
+            <div class="tc" id="cT4">
+              <div class="empty-state terminal-line">sin calcular</div>
+            </div>
+            <div class="tc" id="cT5">
+              <div class="interp-card" style="border-left-color:var(--cyan)">
+                <div class="ic-q">¿Dónde ocurre la bifurcación social (estabilidad → masificación)?</div>
+                <div class="ic-a">El punto crítico p* = <strong id="cInterpRoot">—</strong> representa la proporción de 
+                adoptantes donde el sistema social cambia de régimen. Debajo de este umbral predomina la estabilidad 
+                (resistencia al cambio supera la difusión). Arriba, se activa el efecto de masificación: α·p·(1-p) supera 
+                las fuerzas de resistencia β y la presión social γ·tanh(σ·p).</div>
+              </div>
+              <div class="interp-card" style="border-left-color:var(--amber);margin-top:0.6rem">
+                <div class="ic-q">¿Por qué Newton-Raphson es riesgoso aquí?</div>
+                <div class="ic-a">La función tiene derivada cercana a cero en la zona de bifurcación cuando α·(1-2p)≈β+γ·σ.
+                Newton puede oscilar o divergir. <strong>Bisección garantiza</strong> encontrar la raíz si existe cambio de signo.
+                La Secante (sin derivada) es el mejor balance entre velocidad (~<span id="cInterpIterS">—</span> iter.) y robustez.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- workspace -->
+
+<script>
+    /* ════════════════════════════════════
+       STATE
+    ════════════════════════════════════ */
+    let visM = { bisec: true, newton: true, secant: true };
+    let scResults = { A: null, B: null, C: null };
+    let currentSc = 'A';
+
+    function initializeCharts() {
+      ['a', 'b', 'c'].forEach(prefix => {
+        const canvas = document.getElementById(prefix + 'Chart');
+        if (canvas) {
+          const ctx = canvas.getContext('2d');
+          const W = canvas.parentElement.clientWidth || 800;
+          const H = 300;
+          const dpr = window.devicePixelRatio || 1;
+          canvas.width = W * dpr;
+          canvas.height = H * dpr;
+          canvas.style.width = W + 'px';
+          canvas.style.height = H + 'px';
+          ctx.scale(dpr, dpr);
+          ctx.fillStyle = '#0d0f14';
+          ctx.fillRect(0, 0, W, H);
+          ctx.fillStyle = '#3a5060';
+          ctx.font = '14px Share Tech Mono';
+          ctx.textAlign = 'center';
+          ctx.fillText('Presione DETECTAR UMBRAL', W / 2, H / 2);
+        }
+        
+        // Limpiar SOLO las pestañas de texto (T1, T3, T4, T5) - NO T2 que es el canvas de convergencia
+        const textTabs = ['T1', 'T3', 'T4', 'T5'];
+        textTabs.forEach(tab => {
+          const tabDiv = document.getElementById(prefix + tab);
+          if (tabDiv && tabDiv.tagName !== 'CANVAS') {
+            tabDiv.innerHTML = '<div class="empty-state terminal-line">sin calcular</div>';
+          }
+        });
+        
+        // Limpiar el canvas de convergencia (T2) - dibujar mensaje en el canvas
+        const convCanvas = document.getElementById(prefix + 'ConvChart');
+        if (convCanvas) {
+          const ctx = convCanvas.getContext('2d');
+          const W = convCanvas.parentElement.clientWidth || 700;
+          const H = 260;
+          convCanvas.width = W;
+          convCanvas.height = H;
+          convCanvas.style.width = W + 'px';
+          convCanvas.style.height = H + 'px';
+          ctx.fillStyle = '#040608';
+          ctx.fillRect(0, 0, W, H);
+          ctx.fillStyle = '#3a5060';
+          ctx.font = '12px Share Tech Mono';
+          ctx.textAlign = 'center';
+          ctx.fillText('Sin datos de convergencia', W / 2, H / 2);
+        }
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initializeCharts();
+    });
+
+    /* ════════════════════════════════════
+       FUNCTIONS & DERIVATIVES
+    ════════════════════════════════════ */
+    function fA(t, p) {
+      return p.C0 * Math.pow(1 + p.r, t) + p.F * (t / 30) - p.I;
+    }
+    function dfA(t, p) {
+      return p.C0 * Math.log(1 + p.r) * Math.pow(1 + p.r, t) + p.F / 30;
+    }
+
+    function fB(lam, p) {
+      return p.D * lam / (lam + p.mu) - p.C * Math.exp(-p.k * lam) - p.Q;
+    }
+    function dfB(lam, p) {
+      return p.D * p.mu / Math.pow(lam + p.mu, 2) + p.C * p.k * Math.exp(-p.k * lam);
+    }
+
+    function fC(pp, p) {
+      return p.alpha * pp * (1 - pp) - p.beta * (pp - p.pstar) - p.gamma * Math.tanh(p.sigma * pp);
+    }
+    function dfC(pp, p) {
+      return p.alpha * (1 - 2 * pp) - p.beta - p.gamma * p.sigma * (1 - Math.pow(Math.tanh(p.sigma * pp), 2));
+    }
+
+    /* ════════════════════════════════════
+       ROOT FINDING ALGORITHMS
+    ════════════════════════════════════ */
+    function biseccion(f, a, b, tol, maxIt) {
+      const iters = [];
+      if (f(a) * f(b) > 0) return { root: null, iters, error: 'No cambia de signo en [' + a + ',' + b + ']', converged: false };
+      let lo = a, hi = b, mid = a, err = Infinity;
+      for (let k = 1; k <= maxIt; k++) {
+        mid = (lo + hi) / 2;
+        const fm = f(mid);
+        err = Math.abs(hi - lo) / 2;
+        iters.push({ k, a: lo.toFixed(8), b: hi.toFixed(8), mid: mid.toFixed(10), fmid: fm.toExponential(4), err: err.toExponential(4) });
+        if (err < tol || Math.abs(fm) < tol) break;
+        if (f(lo) * fm < 0) hi = mid; else lo = mid;
+      }
+      return { root: mid, iters, converged: err < tol || Math.abs(f(mid)) < tol, error: null };
+    }
+
+    function newtonRaphson(f, df, x0, tol, maxIt) {
+      const iters = [];
+      let x = x0;
+      for (let k = 1; k <= maxIt; k++) {
+        const fx = f(x), dfx = df(x);
+        if (Math.abs(dfx) < 1e-15) return { root: x, iters, converged: false, error: 'Derivada ≈ 0 en x=' + x.toFixed(6) };
+        const xNew = x - fx / dfx;
+        const err = Math.abs(xNew - x);
+        iters.push({ k, x: x.toFixed(10), fx: fx.toExponential(4), dfx: dfx.toExponential(4), xNew: xNew.toFixed(10), err: err.toExponential(4) });
+        x = xNew;
+        if (err < tol) break;
+      }
+      return { root: x, iters, converged: Math.abs(f(x)) < tol * 100, error: null };
+    }
+
+    function secante(f, x0, x1, tol, maxIt) {
+      const iters = [];
+      let xPrev = x0, xCurr = x1;
+      for (let k = 1; k <= maxIt; k++) {
+        const f0 = f(xPrev), f1 = f(xCurr);
+        if (Math.abs(f1 - f0) < 1e-15) return { root: xCurr, iters, converged: false, error: 'f(x₁)−f(x₀) ≈ 0' };
+        const xNew = xCurr - f1 * (xCurr - xPrev) / (f1 - f0);
+        const err = Math.abs(xNew - xCurr);
+        iters.push({ k, x0: xPrev.toFixed(8), x1: xCurr.toFixed(8), xNew: xNew.toFixed(10), fx: f1.toExponential(4), err: err.toExponential(4) });
+        xPrev = xCurr; xCurr = xNew;
+        if (err < tol) break;
+      }
+      return { root: xCurr, iters, converged: Math.abs(f(xCurr)) < tol * 100, error: null };
+    }
+
+    function estimateOrder(iters) {
+      if (iters.length < 4) return null;
+      const errs = iters.map(it => parseFloat(it.err)).filter(e => e > 1e-16);
+      if (errs.length < 3) return null;
+      let orders = [];
+      for (let i = 2; i < Math.min(errs.length, 10); i++) {
+        if (errs[i-2] > 0 && errs[i-1] > 0 && errs[i] > 0) {
+          const o = Math.log(errs[i] / errs[i-1]) / Math.log(errs[i-1] / errs[i-2]);
+          if (isFinite(o) && o > 0 && o < 4) orders.push(o);
+        }
+      }
+      if (!orders.length) return null;
+      return orders.reduce((a,b) => a+b, 0) / orders.length;
+    }
+
+    function runScenario(sc) {
+      let f, df, params, ab, tol, maxIt, varName, unit;
+      
+      if (sc === 'A') {
+        params = { 
+          C0: +document.getElementById('aC0').value, 
+          r: +document.getElementById('aR').value, 
+          F: +document.getElementById('aF').value, 
+          I: +document.getElementById('aI').value 
+        };
+        f = t => fA(t, params); 
+        df = t => dfA(t, params);
+        ab = document.getElementById('aAB').value.split(',').map(Number);
+        tol = +document.getElementById('aTol').value; 
+        maxIt = +document.getElementById('aMaxIt').value;
+        varName = 't (días)'; 
+        unit = 'días';
+      } else if (sc === 'B') {
+        params = { 
+          D: +document.getElementById('bD').value, 
+          mu: +document.getElementById('bMu').value, 
+          C: +document.getElementById('bC').value, 
+          k: +document.getElementById('bK').value, 
+          Q: +document.getElementById('bQ').value 
+        };
+        f = l => fB(l, params); 
+        df = l => dfB(l, params);
+        ab = document.getElementById('bAB').value.split(',').map(Number);
+        tol = +document.getElementById('bTol').value; 
+        maxIt = +document.getElementById('bMaxIt').value;
+        varName = 'λ (tasa)'; 
+        unit = 'u/día';
+      } else {
+        params = { 
+          alpha: +document.getElementById('cAlpha').value, 
+          beta: +document.getElementById('cBeta').value, 
+          pstar: +document.getElementById('cPstar').value, 
+          gamma: +document.getElementById('cGamma').value, 
+          sigma: +document.getElementById('cSigma').value 
+        };
+        f = p => fC(p, params); 
+        df = p => dfC(p, params);
+        ab = document.getElementById('cAB').value.split(',').map(Number);
+        tol = +document.getElementById('cTol').value; 
+        maxIt = +document.getElementById('cMaxIt').value;
+        varName = 'p (proporción)'; 
+        unit = '';
+      }
+      
+      const [a, b] = ab;
+      const x0 = (a + b) / 2;
+      const x1 = x0 + (b - a) * 0.05;
+      
+      const rB = biseccion(f, a, b, tol, maxIt);
+      const rN = newtonRaphson(f, df, x0, tol, maxIt);
+      const rS = secante(f, x0, x1, tol, maxIt);
+      
+      scResults[sc] = { rB, rN, rS, f, a, b, varName, unit, params, x0, x1 };
+      
+      document.getElementById('statusTxt').textContent = '✓ UMBRAL DETECTADO — ESCENARIO ' + sc;
+      
+      renderRootCards(sc, rB, rN, rS, unit);
+      drawFunctionChart(sc);
+      renderIterTable(sc, rB, rN, rS);
+      drawConvChart(sc, rB, rN, rS);
+      renderOrderTab(sc, rB, rN, rS);
+      renderCompTab(sc, rB, rN, rS);
+      renderInterpTab(sc, rB, rN, rS, params);
+    }
+
+    function renderRootCards(sc, rB, rN, rS, unit) {
+      const container = document.getElementById(sc.toLowerCase() + 'RootCards');
+      const maxIter = Math.max(rB.iters.length, rN.iters.length, rS.iters.length);
+      
+      const card = (cls, label, r, color) => {
+        const root = r.root;
+        const iters = r.iters.length;
+        const conv = r.converged;
+        const barPct = maxIter > 0 ? (100 * (1 - iters / maxIter)).toFixed(0) : 0;
+        const convTxt = conv ? '✓ CONVERGIDO' : '✗ NO CONV.';
+        return `<div class="root-card ${cls} fu">
+          <div>
+            <div class="rc-name">${label}</div>
+            <div class="rc-root ${color}">${root !== null ? root.toFixed(8) : '—'} <span style="font-size:0.6rem;color:var(--muted)">${unit}</span></div>
+            <div class="rc-meta">${convTxt}</div>
+            <div class="converge-bar"><div class="converge-fill" style="width:${barPct}%;background:${cls === 'bisec' ? 'var(--bisec)' : cls === 'newton' ? 'var(--newton)' : 'var(--secant)'}"></div></div>
+          </div>
+          <div class="rc-iter">ITER<span>${iters}</span></div>
+        </div>`;
+      };
+      
+      let html = '';
+      if (visM.bisec) html += card('bisec', 'BISECCIÓN', rB, 'green');
+      if (visM.newton) html += card('newton', 'NEWTON-RAPHSON', rN, 'amber');
+      if (visM.secant) html += card('secant', 'SECANTE', rS, 'blue');
+      container.innerHTML = html;
+    }
+
+    function drawFunctionChart(sc) {
+      const R = scResults[sc]; 
+      if (!R) return;
+      const canvas = document.getElementById(sc.toLowerCase() + 'Chart');
+      if (!canvas) return;
+      
+      const ctx = canvas.getContext('2d');
+      const dpr = window.devicePixelRatio || 1;
+      let W = canvas.parentElement.clientWidth;
+      if (W === 0) { setTimeout(() => drawFunctionChart(sc), 100); return; }
+      const H = 300;
+      canvas.width = W * dpr;
+      canvas.height = H * dpr;
+      canvas.style.width = W + 'px';
+      canvas.style.height = H + 'px';
+      ctx.scale(dpr, dpr);
+      
+      const { f, a, b } = R;
+      const N = 400;
+      const xs = Array.from({ length: N }, (_, i) => a + i * (b - a) / (N - 1));
+      const ys = xs.map(x => { try { return f(x); } catch { return NaN; } });
+      const validY = ys.filter(y => isFinite(y));
+      if (!validY.length) return;
+      
+      const yMin = Math.min(...validY) - (Math.max(...validY) - Math.min(...validY)) * 0.15;
+      const yMax = Math.max(...validY) + (Math.max(...validY) - Math.min(...validY)) * 0.15;
+      const ml = 55, mr = 20, mt = 25, mb = 40;
+      const pw = W - ml - mr, ph = H - mt - mb;
+      const cx = x => ml + (x - a) / (b - a) * pw;
+      const cy = y => mt + ph - (Math.max(yMin, Math.min(yMax, y)) - yMin) / (yMax - yMin) * ph;
+      
+      ctx.fillStyle = '#040608';
+      ctx.fillRect(0, 0, W, H);
+      
+      // Grid Y
+      for (let i = 0; i <= 6; i++) {
+        const yv = yMin + i * (yMax - yMin) / 6;
+        const cyy = cy(yv);
+        ctx.strokeStyle = 'rgba(26,40,53,0.9)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(ml, cyy);
+        ctx.lineTo(W - mr, cyy);
+        ctx.stroke();
+        ctx.fillStyle = '#3a5060';
+        ctx.font = '10px Share Tech Mono';
+        ctx.fillText(yv.toFixed(2), 3, cyy + 3);
+      }
+      
+      // Grid X
+      for (let i = 0; i <= 8; i++) {
+        const xv = a + i * (b - a) / 8;
+        const cxx = cx(xv);
+        ctx.strokeStyle = 'rgba(26,40,53,0.6)';
+        ctx.beginPath();
+        ctx.moveTo(cxx, mt);
+        ctx.lineTo(cxx, H - mb);
+        ctx.stroke();
+        ctx.fillStyle = '#3a5060';
+        ctx.fillText(xv.toFixed(1), cxx - 10, H - mb + 14);
+      }
+      
+      // Zero line
+      const zeroY = cy(0);
+      ctx.strokeStyle = '#ff5555';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(ml, zeroY);
+      ctx.lineTo(W - mr, zeroY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      
+      // Function curve
+      const accentCol = sc === 'A' ? '#00e5a0' : sc === 'B' ? '#f0a500' : '#00b8d9';
+      ctx.beginPath();
+      let started = false;
+      for (let i = 0; i < xs.length; i++) {
+        const y = ys[i];
+        if (!isFinite(y)) { started = false; continue; }
+        const px = cx(xs[i]);
+        const py = cy(y);
+        if (!started) {
+          ctx.moveTo(px, py);
+          started = true;
+        } else {
+          ctx.lineTo(px, py);
+        }
+      }
+      ctx.strokeStyle = accentCol;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      
+      // Plot roots
+      const roots = [
+        { x: R.rB.root, col: '#00e5a0', label: 'B', visible: visM.bisec },
+        { x: R.rN.root, col: '#f0a500', label: 'N', visible: visM.newton },
+        { x: R.rS.root, col: '#00b8d9', label: 'S', visible: visM.secant }
+      ];
+      
+      roots.forEach(r => {
+        if (r.visible && r.x !== null && isFinite(r.x)) {
+          const rx = cx(r.x);
+          const ry = cy(0);
+          ctx.beginPath();
+          ctx.arc(rx, ry, 8, 0, Math.PI * 2);
+          ctx.fillStyle = r.col;
+          ctx.fill();
+          ctx.strokeStyle = '#fff';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+          ctx.fillStyle = '#fff';
+          ctx.font = "bold 11px Share Tech Mono";
+          ctx.fillText(`${r.label}: ${r.x.toFixed(4)}`, rx + 10, ry - 10);
+        }
+      });
+      
+      canvas._dp = { a, b, f, ml, mr, W, cx, cy };
+      attachTooltip(canvas, document.getElementById(sc.toLowerCase() + 'Tip'));
+    }
+
+    function attachTooltip(canvas, tipEl) {
+      canvas.onmousemove = function(e) {
+        if (!canvas._dp) { tipEl.style.display = 'none'; return; }
+        const { a, b, f, ml, mr, W, cx, cy } = canvas._dp;
+        const rect = canvas.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        if (mx < ml || mx > W - mr) { tipEl.style.display = 'none'; return; }
+        const xv = a + ((mx - ml) / (W - ml - mr)) * (b - a);
+        let yv;
+        try { yv = f(xv); } catch { yv = NaN; }
+        tipEl.innerHTML = `<div class="t-x">x = ${xv.toFixed(4)}</div><div class="t-row"><span>f(x):</span><span style="color:var(--green)">${isFinite(yv) ? yv.toFixed(6) : '—'}</span></div>`;
+        let left = e.clientX - rect.left + 12;
+        if (left + 170 > W) left = e.clientX - rect.left - 182;
+        tipEl.style.left = left + 'px';
+        tipEl.style.top = (e.clientY - rect.top - 40) + 'px';
+        tipEl.style.display = 'block';
+      };
+      canvas.onmouseleave = () => { tipEl.style.display = 'none'; };
+    }
+
+    function renderIterTable(sc, rB, rN, rS) {
+      const container = document.getElementById(sc.toLowerCase() + 'T1');
+      if (!container) return;
+      
+      let html = '<div style="overflow-x:auto">';
+      
+      if (visM.bisec && rB.iters.length) {
+        html += `<div style="color:var(--bisec);margin:0.5rem 0 0.3rem">// BISECCIÓN (${rB.iters.length} iter.)</div>`;
+        html += `<table class="iter-tbl"><thead><tr><th>k</th><th>a</th><th>b</th><th>xₘ</th><th>f(xₘ)</th><th>|error|</th></tr></thead><tbody>`;
+        rB.iters.slice(0, 20).forEach(it => {
+          html += `<tr><td>${it.k}</td><td>${it.a}</td><td>${it.b}</td><td style="color:var(--bisec)">${it.mid}</td><td>${it.fmid}</td><td>${it.err}</td></tr>`;
+        });
+        if (rB.iters.length > 20) html += `<tr><td colspan="6" style="text-align:center">... ${rB.iters.length - 20} más ...</td></tr>`;
+        html += `</tbody></table>`;
+      }
+      
+      if (visM.newton && rN.iters.length) {
+        html += `<div style="color:var(--newton);margin:1rem 0 0.3rem">// NEWTON-RAPHSON (${rN.iters.length} iter.)</div>`;
+        html += `<table class="iter-tbl"><thead><tr><th>k</th><th>xₖ</th><th>f(xₖ)</th><th>f'(xₖ)</th><th>xₖ₊₁</th><th>|error|</th></tr></thead><tbody>`;
+        rN.iters.slice(0, 20).forEach(it => {
+          html += `<tr><td>${it.k}</td><td>${it.x}</td><td>${it.fx}</td><td>${it.dfx}</td><td style="color:var(--newton)">${it.xNew}</td><td>${it.err}</td></tr>`;
+        });
+        if (rN.iters.length > 20) html += `<tr><td colspan="6" style="text-align:center">... más ...</td></tr>`;
+        html += `</tbody></table>`;
+      }
+      
+      if (visM.secant && rS.iters.length) {
+        html += `<div style="color:var(--secant);margin:1rem 0 0.3rem">// SECANTE (${rS.iters.length} iter.)</div>`;
+        html += `<table class="iter-tbl"><thead><tr><th>k</th><th>x₀</th><th>x₁</th><th>f(x₁)</th><th>x₂</th><th>|error|</th></tr></thead><tbody>`;
+        rS.iters.slice(0, 20).forEach(it => {
+          html += `<tr><td>${it.k}</td><td>${it.x0}</td><td>${it.x1}</td><td>${it.fx}</td><td style="color:var(--secant)">${it.xNew}</td><td>${it.err}</td></tr>`;
+        });
+        if (rS.iters.length > 20) html += `<tr><td colspan="6" style="text-align:center">... más ...</td></tr>`;
+        html += `</tbody></table>`;
+      }
+      
+      html += '</div>';
+      container.innerHTML = html || '<div class="empty-state terminal-line">sin calcular</div>';
+    }
+
+    function drawConvChart(sc, rB, rN, rS) {
+      const canvas = document.getElementById(sc.toLowerCase() + 'ConvChart');
+      if (!canvas) return;
+      
+      const ctx = canvas.getContext('2d');
+      const W = canvas.parentElement.clientWidth || 700;
+      const H = 260;
+      canvas.width = W;
+      canvas.height = H;
+      canvas.style.width = W + 'px';
+      canvas.style.height = H + 'px';
+      
+      ctx.fillStyle = '#040608';
+      ctx.fillRect(0, 0, W, H);
+      
+      const seriesData = [];
+      if (visM.bisec && rB.iters.length) seriesData.push({ iters: rB.iters, col: '#00e5a0', label: 'Bisección' });
+      if (visM.newton && rN.iters.length) seriesData.push({ iters: rN.iters, col: '#f0a500', label: 'Newton-R' });
+      if (visM.secant && rS.iters.length) seriesData.push({ iters: rS.iters, col: '#00b8d9', label: 'Secante' });
+      
+      if (!seriesData.length) {
+        ctx.fillStyle = '#3a5060';
+        ctx.font = '12px Share Tech Mono';
+        ctx.textAlign = 'center';
+        ctx.fillText('Sin datos de convergencia', W / 2, H / 2);
+        return;
+      }
+      
+      const allErrs = seriesData.flatMap(s => s.iters.map(it => parseFloat(it.err)).filter(e => e > 1e-18 && isFinite(e)));
+      if (!allErrs.length) return;
+      
+      const maxLogE = Math.log10(Math.max(...allErrs));
+      const minLogE = Math.log10(Math.min(...allErrs)) - 1;
+      const maxK = Math.max(...seriesData.map(s => s.iters.length));
+      const ml = 65, mr = 20, mt = 20, mb = 40;
+      const pw = W - ml - mr, ph = H - mt - mb;
+      const cx = k => ml + ((k - 1) / (Math.max(maxK - 1, 1))) * pw;
+      const cy = le => mt + ph - ((le - minLogE) / (maxLogE - minLogE)) * ph;
+      
+      // Grid
+      for (let i = 0; i <= 5; i++) {
+        const le = minLogE + i * (maxLogE - minLogE) / 5;
+        const cyy = cy(le);
+        ctx.strokeStyle = 'rgba(26,40,53,0.8)';
+        ctx.beginPath();
+        ctx.moveTo(ml, cyy);
+        ctx.lineTo(W - mr, cyy);
+        ctx.stroke();
+        ctx.fillStyle = '#3a5060';
+        ctx.font = '9px Share Tech Mono';
+        ctx.fillText('1e' + le.toFixed(0), 3, cyy + 3);
+      }
+      
+      // Draw lines and points
+      seriesData.forEach(s => {
+        ctx.beginPath();
+        let started = false;
+        for (let i = 0; i < s.iters.length; i++) {
+          const e = parseFloat(s.iters[i].err);
+          if (!isFinite(e) || e <= 1e-18) continue;
+          const px = cx(i + 1);
+          const py = cy(Math.log10(e));
+          if (!started) {
+            ctx.moveTo(px, py);
+            started = true;
+          } else {
+            ctx.lineTo(px, py);
+          }
+        }
+        ctx.strokeStyle = s.col;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        for (let i = 0; i < Math.min(s.iters.length, 30); i++) {
+          const e = parseFloat(s.iters[i].err);
+          if (!isFinite(e) || e <= 1e-18) continue;
+          ctx.beginPath();
+          ctx.arc(cx(i + 1), cy(Math.log10(e)), 3, 0, Math.PI * 2);
+          ctx.fillStyle = s.col;
+          ctx.fill();
+        }
+      });
+      
+      // Legend
+      seriesData.forEach((s, i) => {
+        ctx.fillStyle = s.col;
+        ctx.fillRect(ml + 10 + i * 100, mt + 12, 14, 2);
+        ctx.fillStyle = '#7a8a90';
+        ctx.font = '9px Share Tech Mono';
+        ctx.fillText(s.label, ml + 28 + i * 100, mt + 16);
+      });
+    }
+
+    function renderOrderTab(sc, rB, rN, rS) {
+      const container = document.getElementById(sc.toLowerCase() + 'T3');
+      if (!container) return;
+      
+      const oB = estimateOrder(rB.iters);
+      const oN = estimateOrder(rN.iters);
+      const oS = estimateOrder(rS.iters);
+      
+      const rows = [
+        { name: 'Bisección', iters: rB.iters.length, order: oB, cls: 'bisec', theory: 'p = 1.0 (lineal)', note: 'Robusto, convergencia lineal' },
+        { name: 'Newton-R', iters: rN.iters.length, order: oN, cls: 'newton', theory: 'p = 2.0 (cuadrático)', note: 'Rápido, requiere derivada' },
+        { name: 'Secante', iters: rS.iters.length, order: oS, cls: 'secant', theory: 'p ≈ 1.618 (áureo)', note: 'Balance velocidad/robustez' }
+      ];
+      
+      const minIters = Math.min(rB.iters.length, rN.iters.length, rS.iters.length);
+      let html = '<div class="order-grid">';
+      rows.forEach(row => {
+        const isBest = row.iters === minIters && row.iters > 0;
+        html += `<div class="order-box ${row.cls}">
+          <div class="ob-name">${row.name}</div>
+          <div class="ob-order" style="color:var(--${row.cls})">${row.order !== null ? row.order.toFixed(3) : 'N/A'}</div>
+          <div class="ob-theory">${row.theory}<br><em style="color:var(--muted)">${row.note}</em></div>
+          ${isBest ? '<div class="best-tag">MÁS RÁPIDO</div>' : ''}
+        </div>`;
+      });
+      html += '</div>';
+      container.innerHTML = html;
+    }
+
+    function renderCompTab(sc, rB, rN, rS) {
+      const container = document.getElementById(sc.toLowerCase() + 'T4');
+      if (!container) return;
+      
+      const fmtRoot = r => r.root !== null ? r.root.toFixed(8) : '—';
+      const fmtErr = r => r.iters.length ? parseFloat(r.iters[r.iters.length-1].err).toExponential(4) : '—';
+      const oB = estimateOrder(rB.iters);
+      const oN = estimateOrder(rN.iters);
+      const oS = estimateOrder(rS.iters);
+      
+      const html = `<div style="overflow-x:auto">
+        <table class="cmp-tbl">
+          <thead><tr><th>CRITERIO</th><th style="color:var(--bisec)">BISECCIÓN</th><th style="color:var(--newton)">NEWTON-RAPHSON</th><th style="color:var(--secant)">SECANTE</th></tr></thead>
+          <tbody>
+            <tr><td>Raíz x*</td><td style="color:var(--bisec)">${fmtRoot(rB)}</td><td style="color:var(--newton)">${fmtRoot(rN)}</td><td style="color:var(--secant)">${fmtRoot(rS)}</td></tr>
+            <tr><td>Iteraciones</td><td>${rB.iters.length}</td><td>${rN.iters.length}</td><td>${rS.iters.length}</td></tr>
+            <tr><td>Convergió</td><td>${rB.converged ? '✓ SÍ' : '✗ NO'}</td><td>${rN.converged ? '✓ SÍ' : '✗ NO'}</td><td>${rS.converged ? '✓ SÍ' : '✗ NO'}</td></tr>
+            <tr><td>Error final</td><td>${fmtErr(rB)}</td><td>${fmtErr(rN)}</td><td>${fmtErr(rS)}</td></tr>
+            <tr><td>Orden estimado</td><td>${oB !== null ? oB.toFixed(3) : 'N/A'}</td><td>${oN !== null ? oN.toFixed(3) : 'N/A'}</td><td>${oS !== null ? oS.toFixed(3) : 'N/A'}</td></tr>
+            <tr><td>Orden teórico</td><td>1.000</td><td>2.000</td><td>1.618</td></tr>
+            <tr><td>Requiere derivada</td><td style="color:var(--green)">NO</td><td style="color:var(--red)">SÍ</td><td style="color:var(--green)">NO</td></tr>
+          </tbody>
+        </table>
+      </div>`;
+      container.innerHTML = html;
+    }
+
+    function renderInterpTab(sc, rB, rN, rS, params) {
+      const container = document.getElementById(sc.toLowerCase() + 'T5');
+      if (!container) return;
+      
+      const root = (rB.root !== null ? rB.root : (rN.root !== null ? rN.root : rS.root));
+      
+      let html = '';
+      if (sc === 'A') {
+        html = `<div class="interp-card">
+          <div class="ic-q">¿En qué día el costo acumulado supera el ingreso familiar?</div>
+          <div class="ic-a">El umbral crítico se alcanza en el día <strong>${root !== null ? root.toFixed(2) : 'N/A'}</strong>. 
+          A partir de ese momento, la familia ha gastado más de lo que recibe mensualmente (Bs ${params.I}).
+          Con una tasa de incremento diario de ${(params.r * 100).toFixed(1)}%, el costo crece exponencialmente.</div>
+        </div>
+        <div class="interp-card" style="border-left-color:var(--cyan);margin-top:0.6rem">
+          <div class="ic-q">Comparación de robustez y convergencia</div>
+          <div class="ic-a">Bisección es el más <strong>robusto</strong>. Newton-Raphson es el más <strong>veloz</strong> 
+          (converge en ~${rN.iters.length} iteraciones) pero falla si f'(x)≈0. La Secante es un compromiso con orden ~1.618.</div>
+        </div>`;
+      } else if (sc === 'B') {
+        const x0 = rN.iters && rN.iters[0] ? parseFloat(rN.iters[0].x).toFixed(2) : '-';
+        html = `<div class="interp-card" style="border-left-color:var(--amber)">
+          <div class="ic-q">¿Cuál es la tasa de reposición crítica que iguala consumo y llegada?</div>
+          <div class="ic-a">La tasa crítica λ* = <strong>${root !== null ? root.toFixed(4) : 'N/A'}</strong> unidades/día es el equilibrio exacto.
+          Por debajo → desabastecimiento. Por encima → exceso de inventario.</div>
+        </div>
+        <div class="interp-card" style="border-left-color:var(--cyan);margin-top:0.6rem">
+          <div class="ic-q">Sensibilidad al punto inicial</div>
+          <div class="ic-a">Newton-Raphson (x₀=${x0}) convergió en <strong>${rN.iters.length} iteraciones</strong>.
+          La Secante es más segura cuando la derivada es cercana a cero.</div>
+        </div>`;
+      } else {
+        html = `<div class="interp-card" style="border-left-color:var(--cyan)">
+          <div class="ic-q">¿Dónde ocurre la bifurcación social?</div>
+          <div class="ic-a">El punto crítico p* = <strong>${root !== null ? root.toFixed(4) : 'N/A'}</strong> representa la proporción de 
+          adoptantes donde el sistema social cambia de régimen.</div>
+        </div>
+        <div class="interp-card" style="border-left-color:var(--amber);margin-top:0.6rem">
+          <div class="ic-q">¿Por qué Newton-Raphson es riesgoso aquí?</div>
+          <div class="ic-a">La función tiene derivada cercana a cero en la zona de bifurcación. 
+          Bisección garantiza encontrar la raíz. La Secante es el mejor balance (~${rS.iters.length} iter.) y robustez.</div>
+        </div>`;
+      }
+      container.innerHTML = html;
+    }
+
+    function switchScenario(sc, btn) {
+      document.querySelectorAll('.scenario-pane').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.sc-tab').forEach(b => b.classList.remove('active'));
+      document.getElementById('sc' + sc).classList.add('active');
+      btn.classList.add('active');
+      currentSc = sc;
+      
+      if (scResults[sc]) {
+        const R = scResults[sc];
+        renderRootCards(sc, R.rB, R.rN, R.rS, R.unit);
+        drawFunctionChart(sc);
+        renderIterTable(sc, R.rB, R.rN, R.rS);
+        drawConvChart(sc, R.rB, R.rN, R.rS);
+        renderOrderTab(sc, R.rB, R.rN, R.rS);
+        renderCompTab(sc, R.rB, R.rN, R.rS);
+        renderInterpTab(sc, R.rB, R.rN, R.rS, R.params);
+        document.getElementById('statusTxt').textContent = '✓ UMBRAL DETECTADO — ESCENARIO ' + sc;
+      } else {
+        initializeCharts();
+        document.getElementById('statusTxt').textContent = 'SISTEMA EN ESPERA — PRESIONE DETECTAR';
+      }
+    }
+
+    function toggleM(m, btn) {
+      visM[m] = !visM[m];
+      btn.classList.toggle('on', visM[m]);
+      if (scResults[currentSc]) runScenario(currentSc);
+    }
+
+    function toggleLeg(sc, m) {
+      visM[m] = !visM[m];
+      const legMap = { bisec: 'LegB', newton: 'LegN', secant: 'LegS' };
+      const el = document.getElementById(sc.toLowerCase() + legMap[m]);
+      if (el) el.classList.toggle('on', visM[m]);
+      
+      const pills = document.querySelectorAll('.mp');
+      if (m === 'bisec') pills[0].classList.toggle('on', visM[m]);
+      if (m === 'newton') pills[1].classList.toggle('on', visM[m]);
+      if (m === 'secant') pills[2].classList.toggle('on', visM[m]);
+      
+      if (scResults[currentSc]) runScenario(currentSc);
+    }
+
+    function openTab(tabGroupId, tabId, btn) {
+      const group = document.getElementById(tabGroupId);
+      group.querySelectorAll('.tc').forEach(t => t.classList.remove('active'));
+      group.querySelectorAll('.tb').forEach(b => b.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      btn.classList.add('active');
+    }
+
+    window.addEventListener('resize', () => {
+      clearTimeout(window._resizeTimer);
+      window._resizeTimer = setTimeout(() => {
+        if (scResults[currentSc]) {
+          const R = scResults[currentSc];
+          drawFunctionChart(currentSc);
+          drawConvChart(currentSc, R.rB, R.rN, R.rS);
+        }
+      }, 200);
+    });
+
+    window.addEventListener('load', () => {
+      initializeCharts();
+      document.getElementById('statusTxt').textContent = 'SISTEMA EN ESPERA — PRESIONE DETECTAR';
+    });
+  </script>
+
+  
+  <!-- MODAL -->
+  <div class="modal-overlay" id="ctxModal" onclick="closeModalOutside(event)">
+    <div class="modal-box">
+      <div class="modal-head">
+        <div class="modal-title">ESCENARIO E — CONTEXTO DEL PROBLEMA</div>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+
+        <div class="modal-section">
+          <div class="ms-label">Descripción general</div>
+          <div class="ms-title">Umbrales críticos de abastecimiento</div>
+          <div class="ms-text">
+            Se formulan <strong>funciones no lineales</strong> que representan puntos de quiebre en tres sistemas
+            reales:
+            el presupuesto familiar, el flujo de carburante y la dinámica de opinión social.
+            El objetivo es encontrar las <strong>raíces exactas</strong> de estas funciones usando métodos numéricos
+            iterativos
+            y comparar su robustez, velocidad de convergencia y sensibilidad a las condiciones iniciales.
+          </div>
+        </div>
+
+        <div class="modal-section">
+          <div class="ms-label">Modelos no lineales</div>
+          <div class="model-block">
+            <div class="model-tag">⚡ Modelo A — Costo acumulado vs ingreso familiar</div>
+            <div class="model-fn">f(t) = C₀·(1+r)^t + F·(t/30) − I = 0</div>
+            <div class="model-desc">Encuentra el día <em>t</em> en que el gasto acumulado (crecimiento exponencial del
+              costo diario más gasto fijo proporcional) supera el ingreso mensual <em>I</em>. Modela el
+              desabastecimiento progresivo con incremento de precios diario <em>r</em>.</div>
+          </div>
+          <div class="model-block b">
+            <div class="model-tag">⛽ Modelo B — Tasa crítica de reposición de carburante</div>
+            <div class="model-fn">f(λ) = D·λ/(λ+μ) − C·e^(−k·λ) − Q = 0</div>
+            <div class="model-desc">Equilibrio entre tasa de llegada <em>λ</em> y consumo. La demanda crece
+              logísticamente (saturación <em>μ</em>) mientras el consumo crítico decae exponencialmente con la
+              disponibilidad (coeficiente <em>k</em>). La raíz es la tasa mínima de reposición.</div>
+          </div>
+          <div class="model-block c">
+            <div class="model-tag">👥 Modelo C — Bifurcación social (estabilidad → masificación)</div>
+            <div class="model-fn">f(p) = α·p·(1−p) − β·(p−p*) − γ·tanh(σ·p) = 0</div>
+            <div class="model-desc">Modelo de difusión social tipo Bass modificado. La raíz no trivial es el umbral de
+              proporción de adoptantes <em>p</em> a partir del cual la dinámica social cambia de régimen: la difusión
+              <em>α</em> supera la resistencia <em>β</em> y la presión social <em>γ</em>.
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-section">
+          <div class="ms-label">Métodos de solución</div>
+          <div class="methods-grid">
+            <div class="meth-box bisec-box">
+              <div class="meth-name">Bisección</div>
+              <div class="meth-detail">Divide el intervalo [a,b] en dos y descarta la mitad sin cambio de signo.
+                Convergencia lineal <strong>p = 1</strong>. Garantiza encontrar la raíz si f(a)·f(b) &lt; 0. Lento pero
+                absolutamente robusto.</div>
+            </div>
+            <div class="meth-box newton-box">
+              <div class="meth-name">Newton-Raphson</div>
+              <div class="meth-detail">Usa la tangente f'(x) para iterar hacia la raíz. Convergencia cuadrática
+                <strong>p = 2</strong>: el error se eleva al cuadrado en cada paso. Muy rápido pero falla si f'(x) ≈ 0 o
+                la condición inicial es lejana.
+              </div>
+            </div>
+            <div class="meth-box secant-box">
+              <div class="meth-name">Secante</div>
+              <div class="meth-detail">Aproxima la derivada con dos puntos anteriores. Convergencia superlineal
+                <strong>p ≈ 1.618</strong> (razón áurea). No requiere derivada analítica — compromiso óptimo entre
+                robustez y velocidad.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-section">
+          <div class="ms-label">Preguntas que responde la simulación</div>
+          <ul class="questions-list">
+            <li>¿En qué día exacto el costo acumulado supera el ingreso familiar?</li>
+            <li>¿Cuál es la tasa mínima de reposición para evitar desabastecimiento de carburante?</li>
+            <li>¿En qué proporción de adoptantes el comportamiento social se masifica irreversiblemente?</li>
+            <li>¿Qué método de raíces fue más preciso y cuántas iteraciones requirió?</li>
+            <li>¿Cuál es el orden de convergencia estimado experimentalmente vs el teórico?</li>
+            <li>¿Cómo afecta la condición inicial a la convergencia de Newton-Raphson y la Secante?</li>
+          </ul>
+        </div>
+
+        <div class="modal-section">
+          <div class="ms-label">Entregable técnico requerido</div>
+          <div class="ms-text">
+            Gráfico de la función con la raíz señalada ·
+            Tabla completa de iteraciones por método ·
+            Gráfico de convergencia en escala logarítmica ·
+            Orden de convergencia estimado experimentalmente ·
+            Tabla comparativa de robustez, velocidad y sensibilidad ·
+            Interpretación contextual por escenario.
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function openModal() {
+      document.getElementById('ctxModal').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeModal() {
+      document.getElementById('ctxModal').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+    function closeModalOutside(e) {
+      if (e.target === document.getElementById('ctxModal')) closeModal();
+    }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+  </script>
+</body>
+
+</html>
