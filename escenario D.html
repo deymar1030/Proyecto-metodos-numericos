@@ -1,0 +1,2030 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CanastaCalc — Integración Numérica del Poder Adquisitivo</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=IM+Fell+English:ital@0;1&display=swap"
+    rel="stylesheet">
+
+  <style>
+    /* ═══════════════════════════════════════════════════════════════════
+   CANASTACALC — INTEGRACIÓN NUMÉRICA DEL PODER ADQUISITIVO
+   DISEÑO SISTEMA: Layout de Contabilidad, Datos, Técnica Numérica
+   ═══════════════════════════════════════════════════════════════════ */
+
+    @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+    /* ═══════════════════════════════════════════════════════════════════
+   TOKENS — Sistema de Diseño
+═══════════════════════════════════════════════════════════════════ */
+    :root {
+      /* Base — Fondo de papel contable moderno */
+      --bg: #0c0e12;
+      --paper: #11141c;
+      --surface: #161b24;
+      --surface2: #1e2430;
+      --surface3: #262e3d;
+      --border: #2e3848;
+      --border-glow: #3e4a5c;
+
+      /* Colores funcionales — métricas numéricas */
+      --gold: #e8c547;
+      --gold-dim: #c4a132;
+      --gold-glow: rgba(232, 197, 71, 0.1);
+      --red: #e05a5a;
+      --red-dim: #c44646;
+      --red-glow: rgba(224, 90, 90, 0.1);
+      --blue: #5b9bd5;
+      --blue-dim: #3d7bb5;
+      --blue-glow: rgba(91, 155, 213, 0.1);
+      --green: #5bcfa8;
+      --green-dim: #3bb58c;
+      --green-glow: rgba(91, 207, 168, 0.1);
+
+      /* Tipografía */
+      --text: #e8edf5;
+      --text-muted: #8a96a8;
+      --text-dim: #4a5568;
+
+      /* Métodos de Integración */
+      --trap: #e8c547;
+      --s13: #e05a5a;
+      --s38: #5b9bd5;
+
+      /* Fuentes */
+      --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --font-serif: 'Inter', serif;
+
+      /* Espaciado */
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-weight: 400;
+      line-height: 1.5;
+      min-height: 100vh;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      background-image: radial-gradient(ellipse 80% 50% at 20% 20%,
+          rgba(232, 197, 71, 0.02) 0%,
+          transparent 70%);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+   HEADER — Cabecera de Ledger
+═══════════════════════════════════════════════════════════════════ */
+    header {
+      border-bottom: 1px solid var(--border);
+      padding: 1.25rem 2rem;
+      position: relative;
+      background: rgba(17, 20, 28, 0.8);
+      backdrop-filter: blur(12px);
+    }
+
+    .header-rule {
+      display: none;
+    }
+
+    .header-inner {
+      max-width: 1440px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .header-left {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .header-stamp {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .header-center {
+      text-align: center;
+    }
+
+    .logo-main {
+      font-family: var(--font-sans);
+      font-weight: 800;
+      font-size: 1.5rem;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, var(--gold) 0%, #f5d97a 100%);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+
+    .logo-main em {
+      background: none;
+      background-clip: unset;
+      -webkit-background-clip: unset;
+      color: var(--text);
+      font-style: normal;
+      font-weight: 700;
+    }
+
+    .logo-sub {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-top: 0.25rem;
+    }
+
+    .header-right {
+      text-align: right;
+    }
+
+    .method-indicators {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .mi {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 100px;
+      letter-spacing: 0.03em;
+      cursor: pointer;
+      transition: var(--transition);
+      background: transparent;
+    }
+
+    .mi.trap {
+      color: var(--trap);
+      border: 1px solid var(--trap);
+    }
+
+    .mi.s13 {
+      color: var(--s13);
+      border: 1px solid var(--s13);
+    }
+
+    .mi.s38 {
+      color: var(--s38);
+      border: 1px solid var(--s38);
+    }
+
+    .mi.on.trap {
+      background: var(--trap);
+      color: #000;
+      box-shadow: 0 2px 8px rgba(232, 197, 71, 0.3);
+    }
+
+    .mi.on.s13 {
+      background: var(--s13);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(224, 90, 90, 0.3);
+    }
+
+    .mi.on.s38 {
+      background: var(--s38);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(91, 155, 213, 0.3);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+   LEDGER HEADER — Barra de estado contable
+═══════════════════════════════════════════════════════════════════ */
+    .ledger-head {
+      border-bottom: 1px solid var(--border);
+      padding: 0.5rem 2rem;
+      background: var(--paper);
+    }
+
+    .lh-inner {
+      max-width: 1440px;
+      margin: 0 auto;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .lh-text {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      letter-spacing: 0.03em;
+    }
+
+    .lh-text span {
+      color: var(--gold);
+      font-weight: 600;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+   LAYOUT PRINCIPAL — Grid 2 columnas
+═══════════════════════════════════════════════════════════════════ */
+    .page {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 1.5rem 2rem 3rem;
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 1.5rem;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+   SIDEBAR — Paneles de configuración
+═══════════════════════════════════════════════════════════════════ */
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      transition: var(--transition);
+    }
+
+    .panel:hover {
+      border-color: var(--border-glow);
+    }
+
+    .ph {
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      padding: 0.75rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .ph-num {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--gold);
+      color: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 700;
+    }
+
+    .ph h3 {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .ph-right {
+      margin-left: auto;
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--text-dim);
+      letter-spacing: 0.03em;
+    }
+
+    .pb {
+      padding: 1rem;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+   TABLA DE PRODUCTOS — Estilo contable
+═══════════════════════════════════════════════════════════════════ */
+    .products-section {
+      margin-bottom: 0;
+    }
+
+    .prod-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .prod-table th {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      padding: 0.75rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+    }
+
+    .prod-table th:not(:first-child) {
+      text-align: right;
+    }
+
+    .prod-table td {
+      padding: 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .ci {
+      width: 100%;
+      padding: 0.65rem 0.75rem;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      text-align: right;
+      transition: background 0.15s;
+    }
+
+    .ci:focus {
+      background: var(--surface3);
+    }
+
+    .ci.name {
+      text-align: left;
+      color: var(--gold);
+      font-weight: 500;
+    }
+
+    .ci.qty {
+      color: var(--text-muted);
+    }
+
+    .rd {
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      cursor: pointer;
+      width: 40px;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      transition: color 0.15s;
+    }
+
+    .rd:hover {
+      color: var(--red);
+    }
+
+    .add-row-btn {
+      width: 100%;
+      padding: 0.65rem;
+      background: transparent;
+      border: none;
+      border-top: 1px dashed var(--border);
+      color: var(--text-muted);
+      cursor: pointer;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      transition: var(--transition);
+    }
+
+    .add-row-btn:hover {
+      color: var(--gold);
+      background: var(--surface2);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+   PARÁMETROS — Formulario técnico
+═══════════════════════════════════════════════════════════════════ */
+    .param-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    .param-box {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .param-lbl {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .param-inp {
+      padding: 0.6rem 0.75rem;
+      background: var(--surface3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      outline: none;
+      transition: var(--transition);
+      width: 100%;
+    }
+
+    .param-inp:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 1px var(--gold-glow);
+    }
+
+    .sep-line {
+      height: 1px;
+      background: var(--border);
+      margin: 1rem 0;
+    }
+
+    /* Botón de cálculo */
+    .calc-btn {
+      width: 100%;
+      padding: 0.85rem;
+      background: var(--gold);
+      color: #000;
+      border: none;
+      border-radius: var(--radius-md);
+      font-family: var(--font-sans);
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      letter-spacing: 0.03em;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .calc-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, transparent 60%);
+    }
+
+    .calc-btn:hover {
+      background: var(--gold-dim);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(232, 197, 71, 0.3);
+    }
+
+    .calc-btn:active {
+      transform: translateY(0);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+   KPI STRIP — Métricas clave
+═══════════════════════════════════════════════════════════════════ */
+    .kpi-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      margin-bottom: 1rem;
+    }
+
+    .kpi {
+      background: var(--surface);
+      padding: 1rem 1.25rem;
+      position: relative;
+    }
+
+    .kpi::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+    }
+
+    .kpi.k-total::after {
+      background: var(--gold);
+    }
+
+    .kpi.k-base::after {
+      background: var(--green);
+    }
+
+    .kpi.k-loss::after {
+      background: var(--red);
+    }
+
+    .kpi.k-pct::after {
+      background: var(--blue);
+    }
+
+    .kpi-label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+
+    .kpi-value {
+      font-family: var(--font-sans);
+      font-weight: 800;
+      font-size: 1.6rem;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+    }
+
+    .kpi-value.gold {
+      color: var(--gold);
+    }
+
+    .kpi-value.green {
+      color: var(--green);
+    }
+
+    .kpi-value.red {
+      color: var(--red);
+    }
+
+    .kpi-value.blue {
+      color: var(--blue);
+    }
+
+    .kpi-sub {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      color: var(--text-dim);
+      margin-top: 0.35rem;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+   PANEL DE CHART — Visualización
+═══════════════════════════════════════════════════════════════════ */
+    .chart-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .chart-toolbar {
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      padding: 0.75rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .ct-title {
+      font-family: var(--font-sans);
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: var(--gold);
+    }
+
+    .ct-legend {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .leg {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      opacity: 0.5;
+      transition: opacity 0.2s;
+    }
+
+    .leg.on {
+      opacity: 1;
+    }
+
+    .leg-line {
+      width: 20px;
+      height: 2px;
+      border-radius: 1px;
+    }
+
+    .leg-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      background: var(--bg);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+   TABS — Pestañas de análisis técnico
+═══════════════════════════════════════════════════════════════════ */
+    .tabs-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .tabs-bar {
+      display: flex;
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 0.75rem 0.5rem;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: var(--transition);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .tab-btn:hover {
+      color: var(--text);
+      background: rgba(232, 197, 71, 0.05);
+    }
+
+    .tab-btn.active {
+      color: var(--gold);
+      border-bottom-color: var(--gold);
+    }
+
+    .tc {
+      padding: 1.25rem;
+      display: none;
+    }
+
+    .tc.active {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(4px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+   INTEGRATION BLOCKS — Tarjetas de métodos
+═══════════════════════════════════════════════════════════════════ */
+    .int-block {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      margin-bottom: 1rem;
+      border-left: 3px solid transparent;
+      transition: var(--transition);
+    }
+
+    .int-block.trap {
+      border-left-color: var(--trap);
+    }
+
+    .int-block.s13 {
+      border-left-color: var(--s13);
+    }
+
+    .int-block.s38 {
+      border-left-color: var(--s38);
+    }
+
+    .ib-head {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .ib-name {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .ib-result {
+      font-family: var(--font-sans);
+      font-weight: 800;
+      font-size: 1.2rem;
+    }
+
+    .ib-result.gold {
+      color: var(--gold);
+    }
+
+    .ib-result.red {
+      color: var(--red);
+    }
+
+    .ib-result.blue {
+      color: var(--blue);
+    }
+
+    .ib-body {
+      padding: 1rem;
+    }
+
+    .formula-box {
+      background: var(--surface3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.75rem;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      line-height: 1.8;
+      margin-bottom: 1rem;
+    }
+
+    .formula-box .hl {
+      color: var(--gold);
+      font-weight: 600;
+    }
+
+    .formula-box .hlr {
+      color: var(--red);
+      font-weight: 600;
+    }
+
+    .formula-box .hlb {
+      color: var(--blue);
+      font-weight: 600;
+    }
+
+    /* Tabla de pasos */
+    .step-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+    }
+
+    .step-table th {
+      background: var(--surface3);
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border);
+      text-align: right;
+      color: var(--text-muted);
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+
+    .step-table th:first-child {
+      text-align: left;
+    }
+
+    .step-table td {
+      padding: 0.45rem 0.75rem;
+      border: 1px solid var(--border);
+      text-align: right;
+      color: var(--text);
+    }
+
+    .step-table td:first-child {
+      text-align: left;
+      color: var(--text-muted);
+    }
+
+    .step-table tr:hover td {
+      background: var(--surface3);
+    }
+
+    .coef-col {
+      color: var(--gold);
+      font-weight: 700;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+   IMPACT LIST — Barras de contribución
+═══════════════════════════════════════════════════════════════════ */
+    .impact-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .impact-row {
+      display: grid;
+      grid-template-columns: 120px 1fr auto;
+      gap: 1rem;
+      align-items: center;
+      padding: 0.6rem 0.75rem;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+    }
+
+    .imp-name {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--gold);
+    }
+
+    .imp-bar-wrap {
+      height: 6px;
+      background: var(--surface3);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .imp-bar {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.6s ease;
+    }
+
+    .imp-val {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--red);
+      white-space: nowrap;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+   PRECISION GRID — Comparativa de métodos
+═══════════════════════════════════════════════════════════════════ */
+    .prec-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
+
+    .prec-box {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 1rem;
+      text-align: center;
+      border-top: 2px solid transparent;
+      transition: var(--transition);
+    }
+
+    .prec-box.trap {
+      border-top-color: var(--trap);
+    }
+
+    .prec-box.s13 {
+      border-top-color: var(--s13);
+    }
+
+    .prec-box.s38 {
+      border-top-color: var(--s38);
+    }
+
+    .prec-name {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+
+    .prec-val {
+      font-family: var(--font-sans);
+      font-weight: 800;
+      font-size: 1.4rem;
+      margin-bottom: 0.35rem;
+    }
+
+    .prec-note {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .best-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      font-weight: 700;
+      background: var(--green);
+      color: #000;
+      border-radius: 100px;
+      letter-spacing: 0.05em;
+      margin-top: 0.5rem;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+   ANSWERS SECTION — Tarjetas de respuestas
+═══════════════════════════════════════════════════════════════════ */
+    .answers {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .answer-card {
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      border-radius: var(--radius-md);
+      padding: 1rem;
+      border-left: 3px solid var(--gold);
+      transition: var(--transition);
+    }
+
+    .answer-card:hover {
+      border-color: var(--border-glow);
+      transform: translateX(2px);
+    }
+
+    .aq {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+      letter-spacing: 0.02em;
+    }
+
+    .aa {
+      font-size: 0.85rem;
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    .aa strong {
+      color: var(--gold);
+      font-weight: 700;
+    }
+
+    .empty {
+      font-family: var(--font-mono);
+      font-style: italic;
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      padding: 1rem 0;
+      text-align: center;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+   FOOTER
+═══════════════════════════════════════════════════════════════════ */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 1rem 2rem;
+      max-width: 1440px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--text-dim);
+      letter-spacing: 0.05em;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+   TOOLTIP
+═══════════════════════════════════════════════════════════════════ */
+    #tooltip2 {
+      position: absolute;
+      background: var(--surface2);
+      border: 1px solid var(--border-glow);
+      border-radius: var(--radius-md);
+      padding: 0.75rem;
+      pointer-events: none;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      z-index: 50;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(8px);
+      min-width: 180px;
+    }
+
+    #tooltip2 .t-day {
+      color: var(--gold);
+      margin-bottom: 6px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+
+    #tooltip2 .t-r {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 2px 0;
+    }
+
+    #tooltip2 .t-k {
+      color: var(--text-muted);
+    }
+
+    #tooltip2 .t-v {
+      font-weight: 700;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+   SCROLLBAR & UTILITIES
+═══════════════════════════════════════════════════════════════════ */
+    ::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--surface3);
+      border-radius: 2px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--border-glow);
+    }
+
+    .fade-up {
+      animation: fadeUp 0.3s ease forwards;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════════════════════════════ */
+    @media (max-width: 960px) {
+      .page {
+        grid-template-columns: 1fr;
+      }
+
+      .kpi-strip {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .prec-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .header-inner {
+        grid-template-columns: 1fr;
+        text-align: center;
+        gap: 0.75rem;
+      }
+
+      .header-left,
+      .header-right {
+        text-align: center;
+      }
+
+      .method-indicators {
+        justify-content: center;
+      }
+
+      .impact-row {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+      }
+
+      .impact-row .imp-bar-wrap {
+        width: 100%;
+      }
+
+      .impact-row .imp-val {
+        text-align: right;
+      }
+    }
+
+    /* Ocultar título del escenario (se muestra en el navbar) */
+    .header-rule,
+    .header-inner,
+    .header-stamp {
+      display: none !important;
+    }
+  </style>
+
+</head>
+
+<body>
+
+  <!-- HEADER -->
+  <header>
+    <div class="header-rule"></div>
+    <div class="header-inner">
+      <div class="header-left">
+        <div class="header-stamp">MÉTODOS NUMÉRICOS III — ESCENARIO D</div>
+        <div class="header-stamp" style="color:var(--text-dim)">ANÁLISIS DE INTEGRACIÓN NUMÉRICA</div>
+      </div>
+      <div class="header-center">
+        <div class="logo-main">Canasta<em>Calc</em></div>
+        <div class="logo-sub">Costo acumulado · Poder adquisitivo familiar</div>
+      </div>
+      <div class="header-right">
+        <div class="method-indicators">
+          <button class="mi trap on" onclick="toggleMethod('trap',this)">TRAPECIO</button>
+          <button class="mi s13  on" onclick="toggleMethod('s13',this)">SIMPSON 1/3</button>
+          <button class="mi s38  on" onclick="toggleMethod('s38',this)">SIMPSON 3/8</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="ledger-head">
+    <div class="lh-inner">
+      <div class="lh-text">FOLIO: <span>D-2025-INT</span></div>
+      <div class="lh-text">PERÍODO: <span id="periodLabel">30 días</span></div>
+      <div class="lh-text">ESTADO: <span id="statusLabel" style="color:var(--text-dim)">SIN CALCULAR</span></div>
+      <div class="lh-text">MONEDA: <span>Bolivianos (Bs)</span></div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="page">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+
+      <!-- PRODUCTS -->
+      <div class="panel">
+        <div class="ph">
+          <div class="ph-num">1</div>
+          <h3>Canasta básica</h3>
+          <div class="ph-right">EDITABLE</div>
+        </div>
+        <div class="pb" style="padding:0">
+          <table class="prod-table">
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th>P₀ inicial</th>
+                <th>Pf final</th>
+                <th>Cant/día</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="prodBody"></tbody>
+          </table>
+          <button class="add-row-btn" onclick="addProduct()">+ agregar producto</button>
+        </div>
+      </div>
+
+      <!-- PARAMS -->
+      <div class="panel">
+        <div class="ph">
+          <div class="ph-num">2</div>
+          <h3>Parámetros</h3>
+        </div>
+        <div class="pb">
+          <div class="param-grid">
+            <div class="param-box">
+              <div class="param-lbl">Días del período</div>
+              <input class="param-inp" type="number" id="paramDays" value="30" min="4" max="365" step="1">
+            </div>
+            <div class="param-box">
+              <div class="param-lbl">Subintervalos (n)</div>
+              <input class="param-inp" type="number" id="paramN" value="30" min="2" max="200" step="2">
+            </div>
+            <div class="param-box">
+              <div class="param-lbl">Ingreso mensual Bs</div>
+              <input class="param-inp" type="number" id="paramIncome" value="2500" min="0">
+            </div>
+            <div class="param-box">
+              <div class="param-lbl">Modelo de precio</div>
+              <select class="param-inp" id="paramModel">
+                <option value="linear">Lineal</option>
+                <option value="exp">Exponencial</option>
+                <option value="step">Escalonado</option>
+                <option value="sigmoid">Sigmoide</option>
+              </select>
+            </div>
+          </div>
+          <div class="sep-line"></div>
+          <button class="calc-btn" onclick="runAll()">▶ Calcular integración</button>
+        </div>
+      </div>
+
+      <!-- ANSWERS -->
+      <div class="panel">
+        <div class="ph">
+          <div class="ph-num">3</div>
+          <h3>Respuestas clave</h3>
+        </div>
+        <div class="pb">
+          <div class="answers" id="answersBox">
+            <div class="empty">— Ejecuta el cálculo primero —</div>
+          </div>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- RIGHT COL -->
+    <div class="right-col">
+
+      <!-- KPI STRIP -->
+      <div class="kpi-strip" id="kpiStrip">
+        <div class="kpi k-total">
+          <div class="kpi-label">Gasto real del mes</div>
+          <div class="kpi-value gold" id="kpiTotal">— Bs</div>
+          <div class="kpi-sub">precios con incremento</div>
+        </div>
+        <div class="kpi k-base">
+          <div class="kpi-label">Gasto sin alza</div>
+          <div class="kpi-value green" id="kpiBase">— Bs</div>
+          <div class="kpi-sub">precio inicial constante</div>
+        </div>
+        <div class="kpi k-loss">
+          <div class="kpi-label">Pérdida adquisitiva</div>
+          <div class="kpi-value red" id="kpiLoss">— Bs</div>
+          <div class="kpi-sub">sobrecosto mensual</div>
+        </div>
+        <div class="kpi k-pct">
+          <div class="kpi-label">% del ingreso afectado</div>
+          <div class="kpi-value blue" id="kpiPct">—%</div>
+          <div class="kpi-sub" id="kpiPctSub">sobre ingreso declarado</div>
+        </div>
+      </div>
+
+      <!-- CHART -->
+      <div class="chart-wrap">
+        <div class="chart-toolbar">
+          <div class="ct-title">Curva de costo diario acumulado — área bajo P(t)</div>
+          <div class="ct-legend">
+            <div class="leg on" id="legTrap" onclick="toggleLeg('trap')">
+              <div class="leg-line" style="background:var(--trap)"></div><span>Trapecio</span>
+            </div>
+            <div class="leg on" id="legS13" onclick="toggleLeg('s13')">
+              <div class="leg-line" style="background:var(--s13); border-style:dashed"></div><span>Simpson 1/3</span>
+            </div>
+            <div class="leg on" id="legS38" onclick="toggleLeg('s38')">
+              <div class="leg-line" style="background:var(--s38); border-style:dotted"></div><span>Simpson 3/8</span>
+            </div>
+            <div class="leg on">
+              <div class="leg-dot" style="background:#fff"></div><span>Puntos</span>
+            </div>
+          </div>
+        </div>
+        <div style="position:relative">
+          <canvas id="mainChart" height="320"></canvas>
+          <div id="tooltip2" style="opacity:0;position:absolute;top:0;left:0;display:none"></div>
+        </div>
+      </div>
+
+      <!-- TABS -->
+      <div class="tabs-wrap">
+        <div class="tabs-bar">
+          <button class="tab-btn active" onclick="openTab('tTrap',this)">TRAPECIO</button>
+          <button class="tab-btn" onclick="openTab('tS13',this)">SIMPSON 1/3</button>
+          <button class="tab-btn" onclick="openTab('tS38',this)">SIMPSON 3/8</button>
+          <button class="tab-btn" onclick="openTab('tImpact',this)">IMPACTO PROD.</button>
+          <button class="tab-btn" onclick="openTab('tPrec',this)">PRECISIÓN</button>
+        </div>
+
+        <div class="tc active" id="tTrap">
+          <div class="int-block trap">
+            <div class="ib-head">
+              <div class="ib-name">Regla del Trapecio — ∫ₐᵇ f(x)dx</div>
+              <div class="ib-result gold" id="resTrap">—</div>
+            </div>
+            <div class="ib-body">
+              <div class="formula-box">
+                T = (h/2) · [<span class="hl">f(x₀)</span> + 2·f(x₁) + 2·f(x₂) + … + 2·f(xₙ₋₁) + <span
+                  class="hl">f(xₙ)</span>]<br>
+                donde <span class="hl">h = (b−a)/n</span>
+              </div>
+              <div style="overflow-x:auto" id="trapTable">
+                <div class="empty">Sin calcular</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tc" id="tS13">
+          <div class="int-block s13">
+            <div class="ib-head">
+              <div class="ib-name">Simpson 1/3 — parábolas compuestas</div>
+              <div class="ib-result red" id="resS13">—</div>
+            </div>
+            <div class="ib-body">
+              <div class="formula-box">
+                S<sub>1/3</sub> = (h/3) · [<span class="hlr">f(x₀)</span> + 4·f(x₁) + 2·f(x₂) + 4·f(x₃) + … + <span
+                  class="hlr">f(xₙ)</span>]<br>
+                <em style="font-size:0.65rem">Requiere n par. Error O(h⁴).</em>
+              </div>
+              <div style="overflow-x:auto" id="s13Table">
+                <div class="empty">Sin calcular</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tc" id="tS38">
+          <div class="int-block s38">
+            <div class="ib-head">
+              <div class="ib-name">Simpson 3/8 — cúbicas compuestas</div>
+              <div class="ib-result blue" id="resS38">—</div>
+            </div>
+            <div class="ib-body">
+              <div class="formula-box">
+                S<sub>3/8</sub> = (3h/8) · [<span class="hlb">f(x₀)</span> + 3·f(x₁) + 3·f(x₂) + 2·f(x₃) + … + <span
+                  class="hlb">f(xₙ)</span>]<br>
+                <em style="font-size:0.65rem">Requiere n múltiplo de 3. Error O(h⁴).</em>
+              </div>
+              <div style="overflow-x:auto" id="s38Table">
+                <div class="empty">Sin calcular</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tc" id="tImpact">
+          <div
+            style="margin-bottom:0.75rem;font-size:0.65rem;letter-spacing:0.1em;color:var(--text-muted);text-transform:uppercase">
+            Contribución al sobrecosto mensual por producto</div>
+          <div class="impact-list" id="impactList">
+            <div class="empty">Sin calcular</div>
+          </div>
+        </div>
+
+        <div class="tc" id="tPrec">
+          <div class="prec-grid" id="precGrid">
+            <div class="empty" style="grid-column:1/-1">Sin calcular</div>
+          </div>
+          <div style="margin-top:1rem" id="precNote"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <span>CanastaCalc — Métodos Numéricos III / Escenario D — Integración numérica aplicada</span>
+    <span>Trapecio · Simpson 1/3 · Simpson 3/8 · © 2025</span>
+  </footer>
+
+<script>
+    /* ════════════════════════════════
+       STATE
+    ════════════════════════════════ */
+    let products = [];
+    let visibleMethods = { trap: true, s13: true, s38: true };
+    let lastResults = null;
+    let calculosRealizados = false; // ← NUEVA FLAG
+
+    const DEFAULT_PRODUCTS = [
+      { name: 'Papa', p0: 8, pf: 12, qty: 2.0 },
+      { name: 'Arroz', p0: 6, pf: 8, qty: 1.5 },
+      { name: 'Aceite', p0: 10, pf: 15, qty: 0.5 },
+      { name: 'Carne', p0: 35, pf: 50, qty: 0.3 },
+      { name: 'Pan', p0: 4, pf: 6, qty: 3.0 },
+    ];
+
+    /* ════════════════════════════════
+       INIT - SOLO CARGA DATOS, SIN CALCULAR
+    ════════════════════════════════ */
+    window.addEventListener('load', () => {
+      console.log("=== INICIALIZANDO (SIN CÁLCULOS AUTOMÁTICOS) ===");
+      products = DEFAULT_PRODUCTS.map(p => ({ ...p }));
+      renderProductTable();
+      limpiarTabsYResultados();
+      console.log("=== LISTO. PRESIONA 'Calcular integración' ===");
+    });
+
+    /* ════════════════════════════════
+       LIMPIAR TODOS LOS RESULTADOS
+    ════════════════════════════════ */
+    function limpiarTabsYResultados() {
+      console.log("Limpiando todas las pestañas y resultados");
+      
+      // KPIs
+      document.getElementById('kpiTotal').textContent = '— Bs';
+      document.getElementById('kpiBase').textContent = '— Bs';
+      document.getElementById('kpiLoss').textContent = '— Bs';
+      document.getElementById('kpiPct').textContent = '—%';
+      document.getElementById('kpiPctSub').textContent = 'sobre ingreso declarado';
+      document.getElementById('statusLabel').textContent = 'SIN CALCULAR';
+      document.getElementById('statusLabel').style.color = 'var(--text-dim)';
+      document.getElementById('periodLabel').textContent = '30 días';
+      
+      // Métodos
+      document.getElementById('resTrap').textContent = '—';
+      document.getElementById('resS13').textContent = '—';
+      document.getElementById('resS38').textContent = '—';
+      
+      // Tablas
+      document.getElementById('trapTable').innerHTML = '<div class="empty">Presiona "Calcular integración"</div>';
+      document.getElementById('s13Table').innerHTML = '<div class="empty">Presiona "Calcular integración"</div>';
+      document.getElementById('s38Table').innerHTML = '<div class="empty">Presiona "Calcular integración"</div>';
+      
+      // Impacto
+      document.getElementById('impactList').innerHTML = '<div class="empty">Presiona "Calcular integración"</div>';
+      
+      // Precisión
+      document.getElementById('precGrid').innerHTML = '<div class="empty" style="grid-column:1/-1">Presiona "Calcular integración"</div>';
+      document.getElementById('precNote').innerHTML = '';
+      
+      // Respuestas
+      document.getElementById('answersBox').innerHTML = '<div class="empty">— Ejecuta el cálculo primero —</div>';
+      
+      // Gráfico vacío
+      limpiarGrafico();
+      
+      calculosRealizados = false;
+      lastResults = null;
+    }
+    
+    function limpiarGrafico() {
+      const canvas = document.getElementById('mainChart');
+      const ctx = canvas.getContext('2d');
+      const W = canvas.parentElement.clientWidth;
+      const H = 320;
+      canvas.width = W;
+      canvas.height = H;
+      ctx.fillStyle = '#0e0c09';
+      ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = '#7a7460';
+      ctx.font = `14px 'Courier Prime'`;
+      ctx.fillText('Presiona "Calcular integración"', W/2-120, H/2);
+    }
+
+    /* ════════════════════════════════
+       PRODUCT TABLE (SOLO VISUAL, SIN CÁLCULOS)
+    ════════════════════════════════ */
+    function renderProductTable() {
+      const body = document.getElementById('prodBody');
+      body.innerHTML = '';
+      products.forEach((p, i) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+      <td><input class="ci name" type="text" value="${p.name}" onchange="products[${i}].name=this.value; marcarPendiente()"></td>
+      <td><input class="ci" type="number" value="${p.p0}" step="0.5" onchange="products[${i}].p0=+this.value; marcarPendiente()"></td>
+      <td><input class="ci" type="number" value="${p.pf}" step="0.5" onchange="products[${i}].pf=+this.value; marcarPendiente()"></td>
+      <td><input class="ci qty" type="number" value="${p.qty}" step="0.1" min="0.1" onchange="products[${i}].qty=+this.value; marcarPendiente()"></td>
+      <td><button class="rd" onclick="removeProduct(${i})">✕</button></td>
+    `;
+        body.appendChild(tr);
+      });
+    }
+
+    function marcarPendiente() {
+      if (calculosRealizados) {
+        document.getElementById('statusLabel').textContent = 'PENDIENTE';
+        document.getElementById('statusLabel').style.color = 'var(--gold)';
+        calculosRealizados = false;
+      }
+    }
+
+    function addProduct() {
+      products.push({ name: `Prod${products.length + 1}`, p0: 5, pf: 7, qty: 1 });
+      renderProductTable();
+      marcarPendiente();
+    }
+
+    function removeProduct(i) {
+      if (products.length <= 1) return;
+      products.splice(i, 1);
+      renderProductTable();
+      marcarPendiente();
+    }
+
+    /* ════════════════════════════════
+       PRICE MODEL
+    ════════════════════════════════ */
+    function priceAtDay(p0, pf, t, T, model) {
+      const frac = t / T;
+      switch (model) {
+        case 'exp': return p0 * Math.pow(pf / p0, frac);
+        case 'step': {
+          const steps = 4;
+          const step = Math.floor(frac * steps) / steps;
+          return p0 + (pf - p0) * step;
+        }
+        case 'sigmoid': {
+          const k = 8;
+          const s = 1 / (1 + Math.exp(-k * (frac - 0.5)));
+          const s0 = 1 / (1 + Math.exp(-k * (0 - 0.5)));
+          const s1 = 1 / (1 + Math.exp(-k * (1 - 0.5)));
+          return p0 + (pf - p0) * (s - s0) / (s1 - s0);
+        }
+        default: return p0 + (pf - p0) * frac;
+      }
+    }
+
+    function totalCostAtDay(t, T, model) {
+      return products.reduce((sum, p) => sum + priceAtDay(p.p0, p.pf, t, T, model) * p.qty, 0);
+    }
+
+    function baseCostAtDay(t, T, model) {
+      return products.reduce((sum, p) => sum + p.p0 * p.qty, 0);
+    }
+
+    /* ════════════════════════════════
+       INTEGRATION METHODS
+    ════════════════════════════════ */
+    function trapecio(f, a, b, n) {
+      const h = (b - a) / n;
+      let sum = f(a) + f(b);
+      const steps = [];
+      for (let i = 1; i < n; i++) {
+        const xi = a + i * h;
+        const fi = f(xi);
+        sum += 2 * fi;
+        if (i <= 20) steps.push({ i, x: xi.toFixed(2), fx: fi.toFixed(4), coef: 2 });
+      }
+      steps.unshift({ i: 0, x: a.toFixed(2), fx: f(a).toFixed(4), coef: 1 });
+      steps.push({ i: n, x: b.toFixed(2), fx: f(b).toFixed(4), coef: 1 });
+      return { value: (h / 2) * sum, h, steps };
+    }
+
+    function simpson13(f, a, b, nRaw) {
+      let n = nRaw % 2 !== 0 ? nRaw + 1 : nRaw;
+      const h = (b - a) / n;
+      let sum = f(a) + f(b);
+      const steps = [];
+      for (let i = 1; i < n; i++) {
+        const xi = a + i * h;
+        const fi = f(xi);
+        const coef = i % 2 === 0 ? 2 : 4;
+        sum += coef * fi;
+        if (i <= 20) steps.push({ i, x: xi.toFixed(2), fx: fi.toFixed(4), coef });
+      }
+      steps.unshift({ i: 0, x: a.toFixed(2), fx: f(a).toFixed(4), coef: 1 });
+      steps.push({ i: n, x: b.toFixed(2), fx: f(b).toFixed(4), coef: 1 });
+      return { value: (h / 3) * sum, h, n, steps };
+    }
+
+    function simpson38(f, a, b, nRaw) {
+      let n = nRaw;
+      while (n % 3 !== 0) n++;
+      const h = (b - a) / n;
+      let sum = f(a) + f(b);
+      const steps = [];
+      for (let i = 1; i < n; i++) {
+        const xi = a + i * h;
+        const fi = f(xi);
+        const coef = i % 3 === 0 ? 2 : 3;
+        sum += coef * fi;
+        if (i <= 20) steps.push({ i, x: xi.toFixed(2), fx: fi.toFixed(4), coef });
+      }
+      steps.unshift({ i: 0, x: a.toFixed(2), fx: f(a).toFixed(4), coef: 1 });
+      steps.push({ i: n, x: b.toFixed(2), fx: f(b).toFixed(4), coef: 1 });
+      return { value: (3 * h / 8) * sum, h, n, steps };
+    }
+
+    /* ════════════════════════════════
+       RUN ALL - SOLO AL PRESIONAR CALCULAR
+    ════════════════════════════════ */
+    function runAll() {
+      console.log("=== runAll() EJECUTADO - Calculando integración ===");
+      
+      const T = parseInt(document.getElementById('paramDays').value) || 30;
+      const n = parseInt(document.getElementById('paramN').value) || 30;
+      const inc = parseFloat(document.getElementById('paramIncome').value) || 2500;
+      const model = document.getElementById('paramModel').value;
+      
+      document.getElementById('periodLabel').textContent = T + ' días';
+
+      const f = t => totalCostAtDay(t, T, model);
+      const fBase = t => baseCostAtDay(t, T, model);
+
+      const rTrap = trapecio(f, 0, T, n);
+      const rS13 = simpson13(f, 0, T, n);
+      const rS38 = simpson38(f, 0, T, n);
+      const rBase = trapecio(fBase, 0, T, n);
+
+      const loss = rTrap.value - rBase.value;
+      const pct = (rTrap.value / inc * 100).toFixed(1);
+
+      lastResults = { rTrap, rS13, rS38, rBase, loss, pct, T, n, inc, model };
+      calculosRealizados = true;
+
+      console.log(`  Resultados: Trap=${rTrap.value.toFixed(2)}, S13=${rS13.value.toFixed(2)}, S38=${rS38.value.toFixed(2)}`);
+
+      // KPIs
+      document.getElementById('kpiTotal').textContent = rTrap.value.toFixed(2) + ' Bs';
+      document.getElementById('kpiBase').textContent = rBase.value.toFixed(2) + ' Bs';
+      document.getElementById('kpiLoss').textContent = loss.toFixed(2) + ' Bs';
+      document.getElementById('kpiPct').textContent = pct + '%';
+      document.getElementById('kpiPctSub').textContent = `de Bs ${inc} ingreso mensual`;
+      document.getElementById('statusLabel').textContent = '✓ CALCULADO';
+      document.getElementById('statusLabel').style.color = 'var(--green)';
+
+      // Method results
+      document.getElementById('resTrap').textContent = rTrap.value.toFixed(4) + ' Bs';
+      document.getElementById('resS13').textContent = rS13.value.toFixed(4) + ' Bs';
+      document.getElementById('resS38').textContent = rS38.value.toFixed(4) + ' Bs';
+
+      // Tables
+      renderStepTable('trapTable', rTrap.steps, rTrap.h, 'trap');
+      renderStepTable('s13Table', rS13.steps, rS13.h, 's13');
+      renderStepTable('s38Table', rS38.steps, rS38.h, 's38');
+
+      // Impact
+      renderImpact(T, n, model);
+
+      // Precision
+      renderPrecision(rTrap, rS13, rS38, T, model);
+
+      // Answers
+      renderAnswers(rTrap, rS13, rS38, rBase, loss, pct, inc, T, model);
+
+      // Chart
+      drawChart(T, model, n);
+      
+      console.log("=== runAll() COMPLETADO ===\n");
+    }
+
+    /* ════════════════════════════════
+       STEP TABLE
+    ════════════════════════════════ */
+    function renderStepTable(id, steps, h, type) {
+      const colorMap = { trap: 'gold', s13: 'red', s38: 'blue' };
+      const col = colorMap[type];
+      const shown = steps.slice(0, 22);
+      const skipped = steps.length - 22;
+      let html = `<table class="step-table">
+    <thead><tr><th>i</th><th>xᵢ (día)</th><th>f(xᵢ) Bs</th><th class="coef-col">Coef.</th><th>Contribución</th></tr></thead><tbody>`;
+      shown.forEach(s => {
+        const contrib = (s.coef * parseFloat(s.fx) * h * (type === 'trap' ? 0.5 : type === 's13' ? 1 / 3 : 3 / 8)).toFixed(4);
+        html += `<tr>
+      <td>${s.i}</td><td>${s.x}</td>
+      <td style="color:var(--text)">${s.fx}</td>
+      <td class="coef-col">${s.coef}</td>
+      <td>${contrib}</td>
+    </tr>`;
+      });
+      if (skipped > 0) html += `<tr><td colspan="5" style="text-align:center;color:var(--text-dim);font-style:italic">… ${skipped} filas más omitidas …</td></tr>`;
+      html += '</tbody></table>';
+      document.getElementById(id).innerHTML = html;
+    }
+
+    /* ════════════════════════════════
+       PRODUCT IMPACT
+    ════════════════════════════════ */
+    function renderImpact(T, n, model) {
+      const impacts = products.map(p => {
+        const f = t => priceAtDay(p.p0, p.pf, t, T, model) * p.qty;
+        const fBase = t => p.p0 * p.qty;
+        const total = trapecio(f, 0, T, n).value;
+        const base = trapecio(fBase, 0, T, n).value;
+        return { name: p.name, excess: total - base, total };
+      }).sort((a, b) => b.excess - a.excess);
+
+      const maxExcess = Math.max(...impacts.map(i => i.excess), 0.01);
+      const list = document.getElementById('impactList');
+      let html = '';
+      impacts.forEach(imp => {
+        const pct = (imp.excess / maxExcess * 100).toFixed(1);
+        const col = pct > 66 ? 'var(--red)' : pct > 33 ? 'var(--accent)' : 'var(--green)';
+        html += `<div class="impact-row">
+      <div class="imp-name">${imp.name}</div>
+      <div class="imp-bar-wrap"><div class="imp-bar" style="width:${pct}%;background:${col}"></div></div>
+      <div class="imp-val">+${imp.excess.toFixed(2)} Bs</div>
+    </div>`;
+      });
+      list.innerHTML = html;
+    }
+
+    /* ════════════════════════════════
+       PRECISION COMPARISON
+    ════════════════════════════════ */
+    function renderPrecision(rTrap, rS13, rS38, T, model) {
+      const f = t => totalCostAtDay(t, T, model);
+      const ref = trapecio(f, 0, T, 2000).value;
+
+      const eT = Math.abs(rTrap.value - ref);
+      const eS13 = Math.abs(rS13.value - ref);
+      const eS38 = Math.abs(rS38.value - ref);
+      const minE = Math.min(eT, eS13, eS38);
+
+      const fmt = v => v < 0.001 ? v.toExponential(3) : v.toFixed(4);
+      const best = e => e === minE ? '<div class="best-badge">MEJOR MÉTODO</div>' : '';
+
+      document.getElementById('precGrid').innerHTML = `
+    <div class="prec-box trap">
+      <div class="prec-name">Trapecio</div>
+      <div class="prec-val" style="color:var(--trap)">${rTrap.value.toFixed(4)}</div>
+      <div class="prec-note">Error ≈ ${fmt(eT)} Bs<br>O(h²) — convergencia cuadrática</div>
+      ${best(eT)}
+    </div>
+    <div class="prec-box s13">
+      <div class="prec-name">Simpson 1/3</div>
+      <div class="prec-val" style="color:var(--s13)">${rS13.value.toFixed(4)}</div>
+      <div class="prec-note">Error ≈ ${fmt(eS13)} Bs<br>O(h⁴) — orden superior</div>
+      ${best(eS13)}
+    </div>
+    <div class="prec-box s38">
+      <div class="prec-name">Simpson 3/8</div>
+      <div class="prec-val" style="color:var(--s38)">${rS38.value.toFixed(4)}</div>
+      <div class="prec-note">Error ≈ ${fmt(eS38)} Bs<br>O(h⁴) — n múltiplo de 3</div>
+      ${best(eS38)}
+    </div>
+  `;
+
+      const mejorNombre = eT === minE ? 'Trapecio' : eS13 === minE ? 'Simpson 1/3' : 'Simpson 3/8';
+      document.getElementById('precNote').innerHTML = `
+    <div class="answer-card" style="border-left-color:var(--green)">
+      <div class="aq">¿Qué método de integración fue más preciso?</div>
+      <div class="aa">
+        <strong>${mejorNombre}</strong> obtuvo el menor error absoluto (${fmt(minE)} Bs) respecto al valor de referencia de alta resolución.
+        Los métodos de Simpson son de orden O(h⁴) frente al O(h²) del trapecio — con más subintervalos, la ventaja de Simpson
+        se hace aún más evidente para curvas suaves. Con n=${lastResults?.n || 30}, la diferencia entre los tres métodos es
+        de <strong>${Math.abs(rTrap.value - rS13.value).toFixed(4)} Bs</strong>.
+      </div>
+    </div>`;
+    }
+
+    /* ════════════════════════════════
+       ANSWERS
+    ════════════════════════════════ */
+    function renderAnswers(rTrap, rS13, rS38, rBase, loss, pct, inc, T, model) {
+      const impacts = products.map(p => {
+        const f = t => (priceAtDay(p.p0, p.pf, t, T, model) - p.p0) * p.qty;
+        return { name: p.name, excess: trapecio(f, 0, T, lastResults?.n || 30).value };
+      }).sort((a, b) => b.excess - a.excess);
+
+      const worst = impacts[0];
+      const rem = inc - rTrap.value;
+
+      document.getElementById('answersBox').innerHTML = `
+    <div class="answer-card fade-up">
+      <div class="aq">¿Cuánto gastó la familia durante el mes?</div>
+      <div class="aa"><strong>${rTrap.value.toFixed(2)} Bs</strong> (Trapecio) · ${rS13.value.toFixed(2)} Bs (S. 1/3) · ${rS38.value.toFixed(2)} Bs (S. 3/8)</div>
+    </div>
+    <div class="answer-card fade-up" style="animation-delay:.05s">
+      <div class="aq">¿Cuánto hubiera gastado si los precios no subían?</div>
+      <div class="aa"><strong>${rBase.value.toFixed(2)} Bs</strong> — precio inicial P₀ constante durante ${T} días.</div>
+    </div>
+    <div class="answer-card fade-up" style="animation-delay:.1s">
+      <div class="aq">¿Cuál fue la pérdida del poder adquisitivo?</div>
+      <div class="aa"><strong style="color:var(--red)">${loss.toFixed(2)} Bs</strong> de sobrecosto = <strong>${pct}%</strong> del ingreso mensual de ${inc} Bs. Remanente: ${rem.toFixed(2)} Bs.</div>
+    </div>
+    <div class="answer-card fade-up" style="animation-delay:.15s">
+      <div class="aq">¿Qué producto afectó más al gasto mensual?</div>
+      <div class="aa"><strong>${worst.name}</strong> con un sobrecosto acumulado de <strong style="color:var(--red)">${worst.excess.toFixed(2)} Bs</strong> durante el período.</div>
+    </div>
+  `;
+    }
+
+    /* ════════════════════════════════
+       CHART
+    ════════════════════════════════ */
+    function drawChart(T, model, n) {
+      const canvas = document.getElementById('mainChart');
+      const ctx = canvas.getContext('2d');
+      const dpr = window.devicePixelRatio || 1;
+      const W = canvas.parentElement.clientWidth;
+      const H = 320;
+      canvas.width = W * dpr; canvas.height = H * dpr;
+      canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+      ctx.scale(dpr, dpr);
+
+      const pts = 300;
+      const xs = Array.from({ length: pts }, (_, i) => i * T / (pts - 1));
+      const yCost = xs.map(t => totalCostAtDay(t, T, model));
+      const yBase = xs.map(t => baseCostAtDay(0, T, model));
+
+      const cumCost = [0];
+      const cumBase = [0];
+      for (let i = 1; i < pts; i++) {
+        const dt = xs[i] - xs[i - 1];
+        cumCost.push(cumCost[i - 1] + (yCost[i] + yCost[i - 1]) / 2 * dt);
+        cumBase.push(cumBase[i - 1] + (yBase[i] + yBase[i - 1]) / 2 * dt);
+      }
+
+      const allY = [...cumCost, ...cumBase];
+      const yMin = 0, yMax = Math.max(...allY) * 1.08;
+      const ml = 60, mr = 20, mt = 20, mb = 40;
+      const pw = W - ml - mr, ph = H - mt - mb;
+      const cx = x => ml + x / T * pw;
+      const cy = y => mt + ph - y / yMax * ph;
+
+      ctx.fillStyle = '#0e0c09';
+      ctx.fillRect(0, 0, W, H);
+
+      const yTicks = 5;
+      for (let i = 0; i <= yTicks; i++) {
+        const yv = yMax * i / yTicks;
+        const cyy = cy(yv);
+        ctx.strokeStyle = 'rgba(58,54,32,0.6)'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(ml, cyy); ctx.lineTo(W - mr, cyy); ctx.stroke();
+        ctx.fillStyle = '#7a7460'; ctx.font = `10px 'Courier Prime'`;
+        ctx.fillText(yv.toFixed(0), 4, cyy + 3);
+      }
+      for (let d = 0; d <= T; d += Math.ceil(T / 8)) {
+        const cxx = cx(d);
+        ctx.strokeStyle = 'rgba(58,54,32,0.4)'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(cxx, mt); ctx.lineTo(cxx, H - mb); ctx.stroke();
+        ctx.fillStyle = '#7a7460'; ctx.font = `10px 'Courier Prime'`;
+        ctx.fillText('d' + d, cxx - 8, H - mb + 14);
+      }
+
+      ctx.save();
+      ctx.beginPath();
+      xs.forEach((x, i) => {
+        const p = { x: cx(x), y: cy(cumCost[i]) };
+        i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y);
+      });
+      for (let i = pts - 1; i >= 0; i--) {
+        ctx.lineTo(cx(xs[i]), cy(cumBase[i]));
+      }
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(196,92,58,0.08)';
+      ctx.fill();
+      ctx.restore();
+
+      ctx.save();
+      ctx.strokeStyle = 'rgba(90,158,111,0.6)'; ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      xs.forEach((x, i) => {
+        const p = { x: cx(x), y: cy(cumBase[i]) };
+        i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y);
+      });
+      ctx.stroke();
+      ctx.restore();
+
+      const drawLine = (data, color, dash = []) => {
+        ctx.save();
+        ctx.strokeStyle = color; ctx.lineWidth = 2;
+        ctx.setLineDash(dash);
+        ctx.shadowColor = color; ctx.shadowBlur = 4;
+        ctx.beginPath();
+        xs.forEach((x, i) => {
+          const p = { x: cx(x), y: cy(data[i]) };
+          i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y);
+        });
+        ctx.stroke();
+        ctx.restore();
+      };
+
+      if (visibleMethods.trap) drawLine(cumCost, '#c8a84b', []);
+      if (visibleMethods.s13) drawLine(cumCost, '#c45c3a', [6, 3]);
+      if (visibleMethods.s38) drawLine(cumCost, '#4a82b4', [3, 3]);
+
+      const sampleStep = Math.ceil(T / 8);
+      for (let d = 0; d <= T; d += sampleStep) {
+        const cxx = cx(d);
+        const idx = Math.round(d / T * (pts - 1));
+        const cyy = cy(cumCost[idx]);
+        ctx.beginPath(); ctx.arc(cxx, cyy, 4, 0, Math.PI * 2);
+        ctx.fillStyle = '#fff'; ctx.fill();
+        ctx.strokeStyle = '#0e0c09'; ctx.lineWidth = 2; ctx.stroke();
+      }
+
+      ctx.fillStyle = '#3d3a2e'; ctx.font = `10px 'Courier Prime'`;
+      ctx.fillText('Bs acum.', 2, mt - 6);
+      ctx.fillText('Días', W - mr - 25, H - mb + 28);
+
+      canvas._draw = { cx, cy, xs, cumCost, cumBase, yCost, T, pts };
+    }
+
+    /* ── Tooltip ── */
+    const chart = document.getElementById('mainChart');
+    const tip2 = document.getElementById('tooltip2');
+    chart.addEventListener('mousemove', function (e) {
+      if (!chart._draw || !calculosRealizados) {
+        tip2.style.opacity = 0;
+        return;
+      }
+      const { cx, cy, xs, cumCost, cumBase, yCost, T, pts } = chart._draw;
+      const rect = chart.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const W = parseFloat(chart.style.width);
+      const ml = 60, mr = 20;
+      if (mx < ml || mx > W - mr) { tip2.style.opacity = 0; return; }
+      const frac = (mx - ml) / (W - ml - mr);
+      const day = frac * T;
+      const idx = Math.min(Math.round(frac * (pts - 1)), pts - 1);
+      const vCost = cumCost[idx], vBase = cumBase[idx];
+      const daily = yCost[idx];
+      const loss = vCost - vBase;
+
+      tip2.innerHTML = `
+    <div class="t-day">Día ${day.toFixed(1)}</div>
+    <div class="t-r"><span class="t-k">Acum. real:</span><span class="t-v" style="color:var(--trap)">${vCost.toFixed(2)} Bs</span></div>
+    <div class="t-r"><span class="t-k">Acum. base:</span><span class="t-v" style="color:var(--green)">${vBase.toFixed(2)} Bs</span></div>
+    <div class="t-r"><span class="t-k">Pérdida:</span><span class="t-v" style="color:var(--red)">${loss.toFixed(2)} Bs</span></div>
+    <div class="t-r"><span class="t-k">Costo día:</span><span class="t-v">${daily.toFixed(2)} Bs</span></div>
+  `;
+      const tipW = 185;
+      let left = e.clientX - rect.left + 12;
+      if (left + tipW > W) left = e.clientX - rect.left - tipW - 12;
+      tip2.style.left = left + 'px';
+      tip2.style.top = (e.clientY - rect.top - 60) + 'px';
+      tip2.style.opacity = 1; tip2.style.display = 'block';
+    });
+    chart.addEventListener('mouseleave', () => { tip2.style.opacity = 0; });
+
+    /* ════════════════════════════════
+       UI TOGGLES
+    ════════════════════════════════ */
+    function toggleMethod(m, btn) {
+      visibleMethods[m] = !visibleMethods[m];
+      btn.classList.toggle('on', visibleMethods[m]);
+      if (calculosRealizados && lastResults) {
+        drawChart(lastResults.T, lastResults.model, lastResults.n);
+      }
+    }
+
+    function toggleLeg(m) {
+      const map = { trap: 'legTrap', s13: 'legS13', s38: 'legS38' };
+      visibleMethods[m] = !visibleMethods[m];
+      document.getElementById(map[m]).classList.toggle('on', visibleMethods[m]);
+      const btnMap = { trap: 0, s13: 1, s38: 2 };
+      const btns = document.querySelectorAll('.mi');
+      btns[btnMap[m]].classList.toggle('on', visibleMethods[m]);
+      if (calculosRealizados && lastResults) drawChart(lastResults.T, lastResults.model, lastResults.n);
+    }
+
+    function openTab(id, btn) {
+      document.querySelectorAll('.tc').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      btn.classList.add('active');
+    }
+
+    let rTimer;
+    window.addEventListener('resize', () => {
+      clearTimeout(rTimer);
+      rTimer = setTimeout(() => {
+        if (calculosRealizados && lastResults) drawChart(lastResults.T, lastResults.model, lastResults.n);
+      }, 150);
+    });
+  </script>
+
+</body>
+
+</html>
